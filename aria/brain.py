@@ -49,6 +49,23 @@ any member you are unsure of so the user can check it.
 Keep answers friendly and to the point. Use Markdown, with ```csharp blocks for code."""
 
 
+DONT_KNOW = ("I don't know anything about that yet. You can teach me: press 👎 and type the right answer, "
+             "or just tell me (for example *remember: ...*).")
+LIST_REQUEST = re.compile(r"\b(what (?:do )?you know|show me|list|examples?|everything|overview|tell me about)\b", re.I)
+EXAMPLES = re.compile(r"\bexamples?\b", re.I)
+
+
+def render_entry(e: Entry) -> str:
+    if "remembered" in e.tags:
+        return f"You told me: _{e.text}_"
+    if e.kind == "code":
+        framework = f" ({e.framework})" if e.framework else ""
+        return f"**{e.title}**{framework}\n\n{e.text}\n\n```csharp\n{e.code}\n```"
+    if e.text.startswith(e.title):
+        return e.text
+    return f"**{e.title}**\n\n{e.text}"
+
+
 @dataclass
 class Reply:
     mode: str  # "claude" or "offline"
@@ -120,31 +137,38 @@ class Brain:
     # ---------- offline mode ----------
 
     def _offline_answer(self, message: str) -> tuple[str, list[Entry]]:
-        """Returns the answer and the entries it was built from."""
+        """Answers with whatever matches best. Returns the answer and the entries it used."""
         coding = wants_code(message)
-        hits = self.kb.search(message, limit=3, kinds=("fact", "qa"), packs=coding)
-        if coding:
-            code = self.kb.search(message, limit=1, kinds=("code",))
-            # Show a code example unless a reference page matches clearly better.
-            if code and not (hits and hits[0][1] > code[0][1] * 1.2):
-                e = code[0][0]
-                return (f"Here's the closest plugin example I've learned: **{e.title}**"
-                        f"{f' ({e.framework})' if e.framework else ''}\n\n{e.text}\n\n```csharp\n{e.code}\n```\n\n"
-                        "_Offline mode can only show examples I've been taught. Add an Anthropic API key "
-                        "so I can write new plugins for you (see the README)._"), [e]
-        if not hits or self.kb.coverage(hits[0][0], message) < MIN_OFFLINE_COVERAGE:
-            return ("I don't know that one yet. You can teach me: press 👎 and type the right answer, "
-                    "or just tell me (for example *remember: ...*)."), []
-        best = hits[0][0]
-        if "remembered" in best.tags:
-            answer = f"You told me: _{best.text}_"
-        elif best.text.startswith(best.title):
-            answer = best.text
+        facts = self.kb.search(message, limit=8, kinds=("fact", "qa"), packs=coding)
+        codes = self.kb.search(message, limit=8, kinds=("code",)) if coding else []
+
+        if LIST_REQUEST.search(message):
+            # "show me examples", "what do you know about X": show the best match and list the rest.
+            pool = codes if EXAMPLES.search(message) and codes else sorted(facts + codes, key=lambda r: r[1], reverse=True)
+            if not pool:
+                return DONT_KNOW, []
+            entries = relevant(pool)
+            answer = "Here's what I know about that:\n\n" + render_entry(entries[0])
+            if len(entries) > 1:
+                answer += "\n\n**Other things I know about this:**\n" + "\n".join(f"- {e.title}" for e in entries[1:])
+                answer += "\n\n_Click one below to see it._"
+            return answer, entries
+
+        # Prefer a code example for plugin questions, unless a reference page matches clearly better.
+        if codes and not (facts and facts[0][1] > codes[0][1] * 1.2):
+            best, others = codes[0][0], relevant(codes)[1:4]
+        elif facts:
+            best, others = facts[0][0], relevant(facts)[1:4]
         else:
-            answer = f"**{best.title}**\n\n{best.text}"
-        others = relevant(hits)[1:]
+            return DONT_KNOW, []
+        answer = render_entry(best)
+        if self.kb.coverage(best, message) < MIN_OFFLINE_COVERAGE:
+            answer = "I'm not sure I know exactly that, but here's the closest thing I know:\n\n" + answer
         if others:
             answer += "\n\n_Related: " + " · ".join(e.title for e in others) + "_"
+        if best.kind == "code":
+            answer += ("\n\n_Offline mode can only show examples I've been taught. Add an Anthropic API key "
+                       "so I can write new plugins for you (see the README)._")
         return answer, [best, *others]
 
     # ---------- Claude mode ----------

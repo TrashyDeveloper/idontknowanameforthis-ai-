@@ -67,6 +67,8 @@ def stem(tok: str) -> str:
 
 
 def tokenize(text: str) -> list[str]:
+    # Version numbers like "9.15.2" would match unrelated numbers, so they're ignored.
+    text = re.sub(r"\bv?\d+\.\d+(?:\.\d+)*\b", " ", text)
     # Code names like "ChangingLeverStatus" are indexed whole and as separate words.
     text = re.sub(r"\b[A-Za-z]*[a-z][A-Z][A-Za-z0-9]*\b", _split_camel, text)
     text = text.lower()

@@ -131,7 +131,11 @@ main { flex: 1; display: flex; width: 100%; max-width: 900px; margin: 0 auto; }
 }
 
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--muted); }
-.source { border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.source {
+  background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: normal;
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; cursor: pointer;
+}
+.source:hover { color: var(--text); border-color: var(--text); }
 .source.user { border-color: var(--ok); color: var(--ok); }
 .vote { background: none; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer; font-size: 13px; }
 .vote:disabled { opacity: 0.6; cursor: default; }

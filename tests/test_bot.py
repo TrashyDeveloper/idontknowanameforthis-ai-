@@ -111,8 +111,8 @@ def test_offline_chat_shows_code_example(client):
 
 @pytest.mark.parametrize("question", ["what's the weather in Paris", "who is the owner of our community?"])
 def test_offline_chat_admits_when_it_does_not_know(client, question):
-    _, text = chat(client, question)
-    assert "don't know" in text
+    meta, text = chat(client, question)
+    assert "don't know" in text or "not sure" in text
 
 
 def test_correction_teaches_the_bot(client):
@@ -192,10 +192,10 @@ def test_questions_are_not_mistaken_for_statements(client, message):
     assert "I'll remember" not in text
 
 
-def test_unknown_answer_lists_no_sources(client):
+def test_unsure_answer_lists_only_what_it_showed(client):
     meta, text = chat(client, "which is my favorite scp?")
-    assert "don't know" in text
-    assert meta["sources"] == []
+    assert "not sure" in text
+    assert meta["sources"] and meta["sources"][0]["title"] in text
 
 
 def test_tokenize_splits_code_names_and_stems():
@@ -223,3 +223,20 @@ def test_plugin_questions_find_exiled_events(kb, question, expected):
 def test_gameplay_questions_ignore_api_packs(kb):
     assert all(not e.pack for e in gather_context(kb, "what happens when a class-d escapes"))
     assert wants_code("what DamageType does the micro hid use")
+
+
+def test_list_request_shows_what_aria_knows(client):
+    meta, text = chat(client, "show me examples that you know about the new exiled 9.15.2")
+    assert text.startswith("Here's what I know about that")
+    assert "Other things I know about this" in text and "```csharp" in text
+    assert all(s["kind"] == "code" for s in meta["sources"])
+
+
+def test_unsure_answers_show_the_closest_thing(client):
+    _, text = chat(client, "is the micro hid good against 173")
+    assert "don't know" not in text
+
+
+def test_nothing_known_says_so(client):
+    meta, text = chat(client, "xyzzy plugh")
+    assert "don't know" in text and meta["sources"] == []

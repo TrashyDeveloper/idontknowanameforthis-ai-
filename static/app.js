@@ -114,10 +114,12 @@ function addFeedback(msg, question, sources) {
   const meta = document.createElement("div");
   meta.className = "meta";
   for (const s of sources) {
-    const chip = document.createElement("span");
+    const chip = document.createElement("button");
     chip.className = `source ${s.source}`;
+    chip.onclick = () => ask(s.title);
     chip.textContent = (s.kind === "code" ? "{ } " : "") + s.title;
-    chip.title = s.source === "user" ? "Something you taught me" : s.pack ? `From the ${s.pack} pack` : "Starter knowledge";
+    chip.title = (s.source === "user" ? "Something you taught me" : s.pack ? `From the ${s.pack} pack` : "Starter knowledge") +
+      " · click to ask about it";
     meta.appendChild(chip);
   }
   const up = Object.assign(document.createElement("button"), { className: "vote", textContent: "👍", title: "Helpful" });
