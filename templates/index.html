@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCP-BOT</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">◉</span>
+      <div>
+        <h1>SCP-BOT</h1>
+        <p class="tagline">Self-learning assistant for SCP: Secret Laboratory</p>
+      </div>
+    </div>
+    <div id="status" class="status" title="">…</div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="chat" role="tab">Chat</button>
+    <button class="tab" data-tab="teach" role="tab">Teach</button>
+    <button class="tab" data-tab="knowledge" role="tab">Knowledge</button>
+  </nav>
+
+  <main>
+    <!-- Chat -->
+    <section id="tab-chat" class="panel active">
+      <div id="messages" class="messages">
+        <div class="msg bot intro">
+          <div class="bubble">
+            <p>Hi! I'm <strong>SCP-BOT</strong>. Ask me anything about SCP: Secret Laboratory, or ask me to write a server plugin in C#.</p>
+            <p class="hint">I learn from you: press 👎 to correct me, type <code>remember: …</code> to teach me a fact, or add plugin examples in the <strong>Teach</strong> tab.</p>
+            <div class="suggestions">
+              <button class="chip suggest">How do I survive SCP-173?</button>
+              <button class="chip suggest">What happens when a Class-D escapes?</button>
+              <button class="chip suggest">Write a LabAPI plugin that welcomes players</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <form id="chat-form" class="composer">
+        <textarea id="chat-input" rows="1" placeholder="Ask about SCP:SL or plugins…" autocomplete="off"></textarea>
+        <button type="submit" id="send">Send</button>
+      </form>
+    </section>
+
+    <!-- Teach -->
+    <section id="tab-teach" class="panel">
+      <div class="cards">
+        <form id="fact-form" class="card">
+          <h2>Teach a fact</h2>
+          <p class="hint">Game facts, strategies, server rules, anything you want it to know.</p>
+          <label>Topic or question
+            <input name="title" required placeholder="e.g. Best way to recontain SCP-106">
+          </label>
+          <label>What it should know
+            <textarea name="text" rows="5" required placeholder="Write the fact or answer here…"></textarea>
+          </label>
+          <label>Tags <span class="muted">(optional, comma separated)</span>
+            <input name="tags" placeholder="106, femur, strategy">
+          </label>
+          <button type="submit">Save fact</button>
+          <p class="form-msg" aria-live="polite"></p>
+        </form>
+
+        <form id="code-form" class="card">
+          <h2>Add a plugin code example</h2>
+          <p class="hint">Paste working C# code. The bot copies its framework and style when writing new plugins.</p>
+          <label>Name
+            <input name="title" required placeholder="e.g. LabAPI: kill players who touch the Tesla gate">
+          </label>
+          <label>Framework
+            <select name="framework">
+              <option>LabAPI</option>
+              <option>EXILED</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>What it does
+            <textarea name="text" rows="2" placeholder="Short description of the example"></textarea>
+          </label>
+          <label>C# code
+            <textarea name="code" rows="12" required class="mono" placeholder="using LabApi.Loader.Features.Plugins; …"></textarea>
+          </label>
+          <label>Tags <span class="muted">(optional)</span>
+            <input name="tags" placeholder="tesla, event, damage">
+          </label>
+          <button type="submit">Save example</button>
+          <p class="form-msg" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- Knowledge -->
+    <section id="tab-knowledge" class="panel">
+      <div class="kb-toolbar">
+        <input id="kb-search" type="search" placeholder="Search what the bot knows…">
+        <a class="button secondary" href="/api/export">Export learned</a>
+      </div>
+      <p id="kb-stats" class="muted"></p>
+      <div id="kb-list" class="kb-list"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

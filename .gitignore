@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Everything the bot learns from you is stored here (kept out of git by default)
+data/learned.json

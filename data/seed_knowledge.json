@@ -1,0 +1,488 @@
+[
+  {
+    "id": "seed-game",
+    "kind": "fact",
+    "title": "What is SCP: Secret Laboratory?",
+    "text": "SCP: Secret Laboratory (SCP:SL) is a free multiplayer horror shooter by Northwood Studios on Steam, based on the SCP Foundation universe. Each round, players spawn as Class-D Personnel, Scientists, Facility Guards or SCPs during a containment breach. Later in the round, reinforcement waves arrive as Nine-Tailed Fox (NTF/MTF, on the Foundation side) or Chaos Insurgency. The game is updated often, so details can change between versions.",
+    "tags": [
+      "overview",
+      "game",
+      "northwood"
+    ]
+  },
+  {
+    "id": "seed-teams",
+    "kind": "fact",
+    "title": "Teams and how each side wins",
+    "text": "Foundation side: Scientists, Facility Guards and Nine-Tailed Fox. They want scientists to escape and SCPs, Class-D and Chaos to be killed or contained. Chaos side: Class-D and Chaos Insurgency. They want Class-D to escape and Foundation personnel dead. SCPs: want to kill all humans. SCPs and Chaos are not on the same team, but they don't have to fight each other, so they often ignore each other. The round ends when only one side (or only SCPs and Chaos) is left.",
+    "tags": [
+      "team",
+      "win",
+      "foundation",
+      "chaos",
+      "mtf",
+      "faction"
+    ]
+  },
+  {
+    "id": "seed-escape",
+    "kind": "fact",
+    "title": "Escaping and what you turn into",
+    "text": "Escaping means reaching the escape exit on the Surface Zone. A Class-D who escapes becomes a Chaos Insurgency Conscript; a Scientist who escapes becomes an NTF Specialist. If you are handcuffed (disarmed) by the other side when you escape, you switch sides: a cuffed Class-D becomes NTF, and a cuffed Scientist becomes Chaos Insurgency. Escapes also help your side's next respawn wave.",
+    "tags": [
+      "escape",
+      "classd",
+      "scientist",
+      "cuff",
+      "disarm",
+      "surface"
+    ]
+  },
+  {
+    "id": "seed-zones",
+    "kind": "fact",
+    "title": "Facility zones",
+    "text": "The map has four zones: Light Containment Zone (LCZ, where Class-D and Scientists start, with SCP-173, SCP-914 and the armory), Heavy Containment Zone (HCZ, home of most SCPs, the generators, the Micro H.I.D. and the Alpha Warhead silo), Entrance Zone (EZ, offices and the exits, where Facility Guards start) and the Surface Zone (Gate A, Gate B, the escape exit and where reinforcements arrive). Checkpoints between zones need a keycard (or SCP-079 / broken doors).",
+    "tags": [
+      "zone",
+      "lcz",
+      "hcz",
+      "entrance",
+      "surface",
+      "map",
+      "checkpoint"
+    ]
+  },
+  {
+    "id": "seed-decon",
+    "kind": "fact",
+    "title": "Light Containment decontamination",
+    "text": "Around 15 minutes into the round, Light Containment Zone is decontaminated: announcements count down, the checkpoints open, then the zone is locked and filled with deadly gas. Anyone still inside LCZ when it starts takes heavy damage and dies, so leave LCZ before the countdown ends.",
+    "tags": [
+      "decontamination",
+      "decon",
+      "lcz",
+      "gas",
+      "timer"
+    ]
+  },
+  {
+    "id": "seed-warhead",
+    "kind": "fact",
+    "title": "Alpha Warhead (the nuke)",
+    "text": "The Alpha Warhead is a nuke that destroys the facility. It is enabled with the lever in the warhead room in Heavy Containment, then started from the panel on the Surface (that needs a keycard). After a countdown of roughly 90 seconds it detonates and kills everyone still inside the facility; people on the Surface survive. It can be cancelled during the countdown (with some restrictions near the end). After detonation, the elevators and gates to the facility are closed.",
+    "tags": [
+      "warhead",
+      "nuke",
+      "alpha",
+      "detonation",
+      "surface"
+    ]
+  },
+  {
+    "id": "seed-respawn",
+    "kind": "fact",
+    "title": "Respawn waves (NTF and Chaos)",
+    "text": "Dead players can come back in reinforcement waves. Nine-Tailed Fox (Foundation) arrives by helicopter and Chaos Insurgency arrives by van, both on the Surface Zone. Which side gets the next wave depends on how well each side is doing (for example escapes and kills). Exact rules (tickets / influence) have changed between game versions.",
+    "tags": [
+      "respawn",
+      "wave",
+      "mtf",
+      "chaos",
+      "helicopter",
+      "van",
+      "spectator"
+    ]
+  },
+  {
+    "id": "seed-mtf-roles",
+    "kind": "fact",
+    "title": "Nine-Tailed Fox (MTF Epsilon-11) roles",
+    "text": "NTF reinforcements spawn as Privates, Sergeants, a Captain (the leader, best keycard and loadout) and Specialists (escaped scientists). Their job is to rescue scientists, kill Class-D and Chaos, and recontain or kill SCPs. Older versions called them Cadet, Lieutenant and Commander.",
+    "tags": [
+      "mtf",
+      "ntf",
+      "private",
+      "sergeant",
+      "captain",
+      "specialist",
+      "role",
+      "class"
+    ]
+  },
+  {
+    "id": "seed-chaos-roles",
+    "kind": "fact",
+    "title": "Chaos Insurgency roles",
+    "text": "Chaos Insurgency spawns as Conscripts, Riflemen, Repressors and Marauders (heavier weapons and armor for the higher ranks). They carry the Chaos Insurgency access device (keycard), rescue Class-D and fight Foundation forces.",
+    "tags": [
+      "chaos",
+      "conscript",
+      "rifleman",
+      "repressor",
+      "marauder",
+      "role",
+      "class"
+    ]
+  },
+  {
+    "id": "seed-human-roles",
+    "kind": "fact",
+    "title": "Starting human roles",
+    "text": "Class-D Personnel start in LCZ cells with nothing and want to escape. Scientists start in LCZ with a scientist keycard. Facility Guards start in the Entrance Zone with a weapon, armor, radio and a guard keycard; their job is to escort scientists out and stop Class-D.",
+    "tags": [
+      "classd",
+      "scientist",
+      "guard",
+      "role",
+      "class",
+      "start",
+      "spawn"
+    ]
+  },
+  {
+    "id": "seed-173",
+    "kind": "fact",
+    "title": "SCP-173 (the Sculpture / Peanut)",
+    "text": "SCP-173 can only move while nobody is looking at it. When everyone watching blinks (blinks are shown on screen), it can teleport forward and snap a neck instantly. It can leave a slowing tantrum puddle and has a breakneck speed ability. Tips: stay in a group so blinks are spread out, back away while watching it, and close doors behind you.",
+    "tags": [
+      "173",
+      "scp",
+      "sculpture",
+      "peanut",
+      "blink"
+    ]
+  },
+  {
+    "id": "seed-096",
+    "kind": "fact",
+    "title": "SCP-096 (the Shy Guy)",
+    "text": "SCP-096 is calm until someone sees its face. Then it enrages, screams and chases everyone who looked at it, breaking through doors, and kills them quickly. It can't be killed fast, so the best tip is to never look at its face. If you are targeted, run, use doors and stay away from teammates so you don't get them seen too.",
+    "tags": [
+      "096",
+      "scp",
+      "shyguy",
+      "face",
+      "enrage"
+    ]
+  },
+  {
+    "id": "seed-049",
+    "kind": "fact",
+    "title": "SCP-049 (the Plague Doctor)",
+    "text": "SCP-049 kills humans by touching them and can then revive their bodies as SCP-049-2 zombies, which fight for the SCPs. Tips: keep your distance and shoot, don't let it corner you, and kill or avoid its zombies. As 049, revive bodies fast before they become too old to revive.",
+    "tags": [
+      "049",
+      "scp",
+      "doctor",
+      "plague",
+      "revive",
+      "0492"
+    ]
+  },
+  {
+    "id": "seed-0492",
+    "kind": "fact",
+    "title": "SCP-049-2 (zombies)",
+    "text": "SCP-049-2 are zombies created when SCP-049 revives a dead human. They are slow-ish melee attackers with lots of health that fight on the SCP team. Players who died can become zombies.",
+    "tags": [
+      "0492",
+      "zombie",
+      "049",
+      "scp"
+    ]
+  },
+  {
+    "id": "seed-079",
+    "kind": "fact",
+    "title": "SCP-079 (the Old AI / computer)",
+    "text": "SCP-079 is an AI that lives in the facility's computers. It moves between cameras and can open, close and lock doors, turn off lights, lock down rooms and ping enemies for other SCPs. It gains experience and levels up to unlock more power. It cannot attack directly. It is recontained when all the generators in Heavy Containment are activated, so as a human, turning on the generators beats 079.",
+    "tags": [
+      "079",
+      "scp",
+      "computer",
+      "camera",
+      "door",
+      "generator",
+      "ai"
+    ]
+  },
+  {
+    "id": "seed-106",
+    "kind": "fact",
+    "title": "SCP-106 (the Old Man / Larry)",
+    "text": "SCP-106 moves through walls and floors and can send humans to the Pocket Dimension, where they must pick the right exit or die. It can stalk and travel around the map. Players can try to recontain it with the Femur Breaker in Heavy Containment. Tip: keep moving; it's slower than you on open ground.",
+    "tags": [
+      "106",
+      "scp",
+      "oldman",
+      "larry",
+      "pocket",
+      "dimension",
+      "femur"
+    ]
+  },
+  {
+    "id": "seed-939",
+    "kind": "fact",
+    "title": "SCP-939 (the dog)",
+    "text": "SCP-939 hunts mostly by sound: running, shooting and talking reveal you to it. It can lunge at targets, release an amnestic cloud that slows and confuses humans, and mimic voices it has heard to lure players. Tips: walk or crouch to stay quiet, avoid the cloud, and don't trust voices you can't see.",
+    "tags": [
+      "939",
+      "scp",
+      "dog",
+      "sound",
+      "mimic",
+      "cloud",
+      "lunge"
+    ]
+  },
+  {
+    "id": "seed-3114",
+    "kind": "fact",
+    "title": "SCP-3114 (the Skeleton)",
+    "text": "SCP-3114 is a skeleton SCP that can disguise itself by wearing the skin of a dead human, so it looks like a normal player. It can strangle people and get close while disguised. Tip: be suspicious of lone 'teammates' that act strangely. It was added in a later update and may not appear every round.",
+    "tags": [
+      "3114",
+      "scp",
+      "skeleton",
+      "disguise"
+    ]
+  },
+  {
+    "id": "seed-914",
+    "kind": "fact",
+    "title": "SCP-914 (the Clockworks)",
+    "text": "SCP-914 in Light Containment upgrades or changes items (and players) you put in it. Settings: Rough, Coarse, 1:1, Fine and Very Fine. Fine is commonly used to upgrade keycards, Coarse/Rough to break things down. Putting yourself in is risky. Results have some randomness.",
+    "tags": [
+      "914",
+      "scp",
+      "upgrade",
+      "keycard",
+      "rough",
+      "coarse",
+      "fine",
+      "lcz"
+    ]
+  },
+  {
+    "id": "seed-keycards",
+    "kind": "fact",
+    "title": "Keycards",
+    "text": "Keycards open doors, lockers and checkpoints. Roughly from weakest to strongest: Janitor, Scientist, Research Supervisor, Zone Manager, Guard, MTF Private, Containment Engineer, MTF Sergeant, MTF Captain, Facility Manager, Chaos Insurgency access device, and O5 (opens almost everything). You can upgrade keycards in SCP-914 on Fine. Names and permissions have changed between versions.",
+    "tags": [
+      "keycard",
+      "card",
+      "o5",
+      "door",
+      "permission",
+      "access"
+    ]
+  },
+  {
+    "id": "seed-medical",
+    "kind": "fact",
+    "title": "Healing items",
+    "text": "Medkit heals a large amount at once. Painkillers heal slowly over time. Adrenaline gives a burst of stamina and temporary extra (shield) health. SCP-500 cures and fully heals almost everything. Tip: heal behind a door, not in the open.",
+    "tags": [
+      "medkit",
+      "painkiller",
+      "adrenaline",
+      "500",
+      "heal",
+      "health",
+      "item"
+    ]
+  },
+  {
+    "id": "seed-scp-items",
+    "kind": "fact",
+    "title": "SCP items",
+    "text": "Useful SCP items include: SCP-500 (full heal pill), SCP-207 (cola: faster movement but drains health), SCP-268 (cap: brief invisibility), SCP-018 (bouncing ball that gets more dangerous each bounce), SCP-330 (candy bowl: take at most 2 candies or you lose your hands), SCP-244 (vase that makes a freezing fog), SCP-2176 (ghost light that breaks the lights in a room), SCP-1853 (better aim/handling while in danger) and SCP-1576 (talk to spectators).",
+    "tags": [
+      "item",
+      "scp",
+      "500",
+      "207",
+      "268",
+      "018",
+      "330",
+      "244",
+      "2176",
+      "1853",
+      "1576"
+    ]
+  },
+  {
+    "id": "seed-weapons",
+    "kind": "fact",
+    "title": "Weapons",
+    "text": "Common guns: COM-15 and COM-18 pistols, FSP-9 and Crossvec SMGs, MTF-E11-SR rifle (NTF), AK and Logicer (Chaos), Shotgun, .44 Revolver, FR-MG-0 and the A7. Special weapons: Micro H.I.D. (a powerful charged energy weapon, great against SCPs), Particle Disruptor (very strong, few shots) and Jailbird (a charging melee baton). Grenades: high-explosive grenades and flashbangs. Guns can be customised with attachments at workstations.",
+    "tags": [
+      "weapon",
+      "gun",
+      "e11",
+      "ak",
+      "logicer",
+      "shotgun",
+      "revolver",
+      "micro",
+      "hid",
+      "jailbird",
+      "grenade",
+      "attachment"
+    ]
+  },
+  {
+    "id": "seed-armor",
+    "kind": "fact",
+    "title": "Armor",
+    "text": "There are three armor types: Light Armor, Combat Armor and Heavy Armor. Heavier armor reduces more damage and lets you carry more ammo and items, but slows you down a little.",
+    "tags": [
+      "armor",
+      "light",
+      "combat",
+      "heavy",
+      "item"
+    ]
+  },
+  {
+    "id": "seed-tips-classd",
+    "kind": "fact",
+    "title": "Tips for playing Class-D",
+    "text": "Grab a keycard as soon as possible (from scientists, lockers or the floor), use SCP-914 to upgrade it, and avoid SCP-173 in LCZ. Work with other Class-D, and if Chaos arrives, head for the Surface. Get out of LCZ before decontamination.",
+    "tags": [
+      "tip",
+      "classd",
+      "strategy",
+      "guide",
+      "beginner"
+    ]
+  },
+  {
+    "id": "seed-tips-scientist",
+    "kind": "fact",
+    "title": "Tips for playing Scientist",
+    "text": "Stick with Facility Guards or NTF, upgrade your keycard, and head for the Entrance Zone and the Surface to escape. Avoid Class-D who might try to cuff you. Escaping turns you into an NTF Specialist.",
+    "tags": [
+      "tip",
+      "scientist",
+      "strategy",
+      "guide",
+      "beginner"
+    ]
+  },
+  {
+    "id": "seed-tips-scp",
+    "kind": "fact",
+    "title": "Tips for playing as an SCP",
+    "text": "Work with the other SCPs (SCP-079 can open doors and ping enemies for you), use your abilities instead of just running at people, and guard key places like generators and exits. Each SCP has its own playstyle; ask me about a specific one.",
+    "tags": [
+      "tip",
+      "scp",
+      "strategy",
+      "guide"
+    ]
+  },
+  {
+    "id": "seed-plugin-frameworks",
+    "kind": "fact",
+    "title": "Plugin frameworks for SCP:SL servers",
+    "text": "SCP:SL dedicated servers can run C# plugins. The main frameworks are LabAPI (Northwood's official plugin API, shipped with the game server in newer versions) and EXILED (a popular community framework). Plugins are C# class libraries (.dll) built against the game's Assembly-CSharp.dll and the framework's DLLs, found in the server's SCPSL_Data/Managed folder. Always check the current docs for your framework's version: APIs and folders change with game updates.",
+    "tags": [
+      "plugin",
+      "csharp",
+      "labapi",
+      "exiled",
+      "server",
+      "framework",
+      "dll",
+      "mod"
+    ]
+  },
+  {
+    "id": "seed-plugin-build",
+    "kind": "fact",
+    "title": "How to build and install a plugin",
+    "text": "1) Install the .NET SDK and create a class library (most SCP:SL plugins target .NET Framework 4.8: <TargetFramework>net48</TargetFramework>). 2) Reference Assembly-CSharp.dll, UnityEngine.CoreModule.dll, Mirror.dll and your framework's DLL (LabApi.dll or the EXILED DLLs / NuGet package). 3) Build with `dotnet build -c Release`. 4) Copy the .dll into the framework's plugins folder (for LabAPI the LabAPI plugins folder in the server's config directory; for EXILED the EXILED/Plugins folder) and restart the server.",
+    "tags": [
+      "plugin",
+      "build",
+      "install",
+      "compile",
+      "dotnet",
+      "net48",
+      "csproj",
+      "dll"
+    ]
+  },
+  {
+    "id": "seed-code-labapi-welcome",
+    "kind": "code",
+    "title": "LabAPI: welcome message when a player joins",
+    "text": "A minimal LabAPI plugin. It subscribes to the player-joined event and shows a broadcast. Starter example: check member names against your LabAPI version.",
+    "framework": "LabAPI",
+    "code": "using System;\nusing LabApi.Events.Arguments.PlayerEvents;\nusing LabApi.Events.Handlers;\nusing LabApi.Features;\nusing LabApi.Loader.Features.Plugins;\n\nnamespace WelcomePlugin\n{\n    public class WelcomePlugin : Plugin\n    {\n        public override string Name => \"WelcomePlugin\";\n        public override string Description => \"Greets players when they join.\";\n        public override string Author => \"You\";\n        public override Version Version => new Version(1, 0, 0);\n        public override Version RequiredApiVersion => new Version(LabApiProperties.CompiledVersion);\n\n        public override void Enable()\n        {\n            PlayerEvents.Joined += OnJoined;\n        }\n\n        public override void Disable()\n        {\n            PlayerEvents.Joined -= OnJoined;\n        }\n\n        private void OnJoined(PlayerJoinedEventArgs ev)\n        {\n            ev.Player.SendBroadcast($\"Welcome to the facility, {ev.Player.Nickname}!\", 5);\n        }\n    }\n}",
+    "tags": [
+      "plugin",
+      "labapi",
+      "join",
+      "welcome",
+      "broadcast",
+      "event"
+    ]
+  },
+  {
+    "id": "seed-code-exiled-welcome",
+    "kind": "code",
+    "title": "EXILED: welcome message with a config file",
+    "text": "A minimal EXILED plugin with a config class. The message can be changed in the server's EXILED config. Starter example: check member names against your EXILED version.",
+    "framework": "EXILED",
+    "code": "using System;\nusing System.ComponentModel;\nusing Exiled.API.Features;\nusing Exiled.API.Interfaces;\nusing Exiled.Events.EventArgs.Player;\n\nnamespace WelcomePlugin\n{\n    public class Config : IConfig\n    {\n        public bool IsEnabled { get; set; } = true;\n        public bool Debug { get; set; } = false;\n\n        [Description(\"Message shown to players when they join. {name} is replaced with their nickname.\")]\n        public string WelcomeMessage { get; set; } = \"Welcome to the facility, {name}!\";\n    }\n\n    public class WelcomePlugin : Plugin<Config>\n    {\n        public override string Name => \"WelcomePlugin\";\n        public override string Author => \"You\";\n        public override Version Version => new Version(1, 0, 0);\n\n        public override void OnEnabled()\n        {\n            Exiled.Events.Handlers.Player.Verified += OnVerified;\n            base.OnEnabled();\n        }\n\n        public override void OnDisabled()\n        {\n            Exiled.Events.Handlers.Player.Verified -= OnVerified;\n            base.OnDisabled();\n        }\n\n        private void OnVerified(VerifiedEventArgs ev)\n        {\n            ev.Player.Broadcast(5, Config.WelcomeMessage.Replace(\"{name}\", ev.Player.Nickname));\n        }\n    }\n}",
+    "tags": [
+      "plugin",
+      "exiled",
+      "join",
+      "welcome",
+      "broadcast",
+      "config",
+      "event"
+    ]
+  },
+  {
+    "id": "seed-code-exiled-spawn-item",
+    "kind": "code",
+    "title": "EXILED: give Class-D an item when they spawn",
+    "text": "Uses the Spawned event to give every Class-D a flashlight. Shows how to check a player's role. Starter example.",
+    "framework": "EXILED",
+    "code": "using Exiled.Events.EventArgs.Player;\nusing PlayerRoles;\n\nnamespace SpawnItems\n{\n    public class EventHandlers\n    {\n        // Subscribe in your plugin's OnEnabled:  Exiled.Events.Handlers.Player.Spawned += handlers.OnSpawned;\n        public void OnSpawned(SpawnedEventArgs ev)\n        {\n            if (ev.Player.Role.Type == RoleTypeId.ClassD)\n            {\n                ev.Player.AddItem(ItemType.Flashlight);\n            }\n        }\n    }\n}",
+    "tags": [
+      "plugin",
+      "exiled",
+      "spawn",
+      "item",
+      "classd",
+      "role",
+      "give",
+      "event"
+    ]
+  },
+  {
+    "id": "seed-code-ra-command",
+    "kind": "code",
+    "title": "Remote Admin command: heal yourself",
+    "text": "A Remote Admin console command using the game's built-in CommandSystem (works with EXILED; LabAPI servers use the same CommandSystem). Type `healme` in the RA console. Starter example.",
+    "framework": "EXILED",
+    "code": "using System;\nusing CommandSystem;\nusing Exiled.API.Features;\n\nnamespace HealCommand\n{\n    [CommandHandler(typeof(RemoteAdminCommandHandler))]\n    public class HealMe : ICommand\n    {\n        public string Command => \"healme\";\n        public string[] Aliases => new[] { \"hm\" };\n        public string Description => \"Fully heals the player who runs it.\";\n\n        public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)\n        {\n            Player player = Player.Get(sender);\n            if (player == null)\n            {\n                response = \"Only players can use this command.\";\n                return false;\n            }\n\n            player.Health = player.MaxHealth;\n            response = $\"Healed {player.Nickname}.\";\n            return true;\n        }\n    }\n}",
+    "tags": [
+      "plugin",
+      "command",
+      "remote",
+      "admin",
+      "ra",
+      "heal",
+      "exiled",
+      "console"
+    ]
+  }
+]
