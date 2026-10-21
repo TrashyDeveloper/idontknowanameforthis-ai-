@@ -1,4 +1,4 @@
-"""Web app for SCP-BOT. Run it with:  python app.py  and open http://127.0.0.1:5000"""
+"""Web app for Aria. Run it with:  python app.py  and open http://127.0.0.1:5000"""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 from flask import Flask, Response, jsonify, render_template, request
 
-from scpbot.brain import Brain
-from scpbot.knowledge import KnowledgeBase
+from aria.brain import Brain
+from aria.knowledge import KnowledgeBase
 
 ROOT = Path(__file__).parent
 REMEMBER = re.compile(r"^\s*(?:remember|learn|note)\s*(?:that)?\s*[:,]?\s+(.+)$", re.IGNORECASE | re.DOTALL)
@@ -102,7 +102,7 @@ def create_app(seed_path: Path | None = None, learned_path: Path | None = None,
     def export():
         data = kb.learned_path.read_text(encoding="utf-8") if kb.learned_path.exists() else "{}"
         return Response(data, mimetype="application/json",
-                        headers={"Content-Disposition": "attachment; filename=scpbot-learned.json"})
+                        headers={"Content-Disposition": "attachment; filename=aria-learned.json"})
 
     return app
 
@@ -115,5 +115,5 @@ def _events(events):
 
 if __name__ == "__main__":
     app = create_app()
-    print("SCP-BOT is running. Open http://127.0.0.1:%s in your browser." % os.environ.get("PORT", 5000))
+    print("Aria is running. Open http://127.0.0.1:%s in your browser." % os.environ.get("PORT", 5000))
     app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False, threaded=True)

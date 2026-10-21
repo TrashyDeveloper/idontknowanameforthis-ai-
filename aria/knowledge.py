@@ -56,6 +56,8 @@ def tokenize(text: str) -> list[str]:
     text = re.sub(r"\bold[\s-]*man\b", " oldman ", text)
     text = re.sub(r"\bd[\s-]*class\b", " dclass ", text)
     text = text.replace("c#", " csharp ")
+    # Questions about the bot itself.
+    text = re.sub(r"\b(who|what) are you\b|\byour name\b|\bwhat can you do\b|\byourself\b", " aria ", text)
     tokens = []
     for tok in re.findall(r"[a-z0-9]+", text):
         if tok in STOPWORDS or (len(tok) == 1 and tok not in ALIASES and not tok.isdigit()):

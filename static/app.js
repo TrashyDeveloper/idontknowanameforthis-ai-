@@ -1,4 +1,4 @@
-// SCP-BOT web page: chat, teaching forms and the knowledge browser.
+// Aria web page: chat, teaching forms and the knowledge browser.
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const chatHistory = []; // {role, content} pairs sent with each question for context

@@ -16,18 +16,18 @@ from dataclasses import dataclass
 
 from .knowledge import Entry, KnowledgeBase
 
-MODEL = os.environ.get("SCPBOT_MODEL", "claude-opus-5-5")
-EFFORT = os.environ.get("SCPBOT_EFFORT", "medium")
+MODEL = os.environ.get("ARIA_MODEL", "claude-opus-5-5")
+EFFORT = os.environ.get("ARIA_EFFORT", "medium")
 HISTORY_TURNS = 10  # how many earlier messages are sent along for context
 MIN_OFFLINE_COVERAGE = 0.6  # the offline bot needs most of the question's words to match
 RELEVANCE_CUTOFF = 0.35  # drop search results scoring under 35% of the best one
 
 CODE_WORDS = {
     "plugin", "plugins", "code", "c#", "csharp", "script", "event", "events", "handler",
-    "command", "exiled", "labapi", "nwapi", "dll", "compile", "class", "method", "config",
+    "command", "exiled", "labapi", "nwapi", "dll", "compile", "method", "config",
 }
 
-SYSTEM_PROMPT = """You are SCP-BOT, an assistant specialised in the game SCP: Secret Laboratory \
+SYSTEM_PROMPT = """You are Aria, an assistant specialised in the game SCP: Secret Laboratory \
 (by Northwood Studios) and in writing C# server plugins for it.
 
 Each user message may start with a <knowledge> block holding entries from your knowledge base. \

@@ -1,4 +1,4 @@
-# SCP-BOT
+# Aria
 
 A self-learning chat assistant for **SCP: Secret Laboratory** that runs in your browser.
 
@@ -55,8 +55,8 @@ Never put your key in the code or commit it to GitHub.
 
 Optional settings (environment variables):
 
-- `SCPBOT_MODEL`: which Claude model to use (default `claude-opus-5-5`).
-- `SCPBOT_EFFORT`: how hard it thinks: `low`, `medium` (default) or `high`. Lower is faster and cheaper.
+- `ARIA_MODEL`: which Claude model to use (default `claude-opus-5-5`).
+- `ARIA_EFFORT`: how hard it thinks: `low`, `medium` (default) or `high`. Lower is faster and cheaper.
 - `PORT`: the web port (default `5000`).
 
 ## How it learns
@@ -85,8 +85,8 @@ them before relying on them. When you find code that compiles and works, add it 
 
 ```
 app.py                     web server (Flask) and API
-scpbot/knowledge.py        knowledge base: storage, search, learning
-scpbot/brain.py            builds answers (offline or with Claude)
+aria/knowledge.py          knowledge base: storage, search, learning
+aria/brain.py              builds answers (offline or with Claude)
 data/seed_knowledge.json   starter knowledge about the game and plugins
 data/learned.json          what it learned from you (created automatically)
 templates/, static/        the web page

@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from app import create_app
-from scpbot.brain import Brain, format_knowledge, wants_code
-from scpbot.knowledge import KnowledgeBase, tokenize
+from aria.brain import Brain, format_knowledge, wants_code
+from aria.knowledge import KnowledgeBase, tokenize
 
 SEED = Path(__file__).parent.parent / "data" / "seed_knowledge.json"
 
@@ -83,7 +83,8 @@ def test_add_rejects_empty_entries(kb):
 def test_code_requests_include_code_examples(kb):
     assert wants_code("write a LabAPI plugin that welcomes players")
     assert not wants_code("how do I survive scp-096")
-    from scpbot.brain import gather_context
+    assert not wants_code("what happens when a class-d escapes")
+    from aria.brain import gather_context
     context = gather_context(kb, "write a LabAPI plugin that welcomes players when they join")
     assert any(e.id == "seed-code-labapi-welcome" for e in context)
     text = format_knowledge(context)
@@ -95,6 +96,12 @@ def test_offline_chat_answers_from_knowledge(client):
     assert meta["mode"] == "offline"
     assert "SCP-173" in text
     assert any(s["id"] == "seed-173" for s in meta["sources"])
+
+
+@pytest.mark.parametrize("question", ["who are you?", "what's your name", "what can you do"])
+def test_aria_introduces_itself(client, question):
+    _, text = chat(client, question)
+    assert "I'm Aria" in text
 
 
 def test_offline_chat_shows_code_example(client):
