@@ -7,15 +7,18 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <header>
+  <header class="topbar">
     <div class="brand">
-      <span class="logo">◉</span>
+      <span class="logo" aria-hidden="true">◉</span>
       <div>
         <h1>Aria</h1>
         <p class="tagline">Self-learning assistant for SCP: Secret Laboratory</p>
       </div>
     </div>
-    <div id="status" class="status" title="">…</div>
+    <div class="top-actions">
+      <div id="status" class="status" title="">…</div>
+      <button id="new-chat" class="secondary small" title="Start a new conversation">New chat</button>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -30,18 +33,19 @@
       <div id="messages" class="messages">
         <div class="msg bot intro">
           <div class="bubble">
-            <p>Hi! I'm <strong>Aria</strong>. Ask me anything about SCP: Secret Laboratory, or ask me to write a server plugin in C#.</p>
-            <p class="hint">I learn from you: press 👎 to correct me, type <code>remember: …</code> to teach me a fact, or add plugin examples in the <strong>Teach</strong> tab.</p>
+            <p>Hi! I'm <strong>Aria</strong>. Ask me anything about SCP: Secret Laboratory, or ask me for a server plugin in C#. Just talk normally, I'll work out what you mean.</p>
+            <p class="hint">I learn from you: 👍 good answers, 👎 to correct me, tell me things like <code>my favorite SCP is 106</code>, or teach me words like <code>tp means teleport</code>.</p>
             <div class="suggestions">
               <button class="chip suggest">How do I survive SCP-173?</button>
               <button class="chip suggest">What happens when a Class-D escapes?</button>
-              <button class="chip suggest">Write a LabAPI plugin that welcomes players</button>
+              <button class="chip suggest">Make me an EXILED custom role example</button>
+              <button class="chip suggest">Show me EXILED examples</button>
             </div>
           </div>
         </div>
       </div>
       <form id="chat-form" class="composer">
-        <textarea id="chat-input" rows="1" placeholder="Ask about SCP:SL or plugins…" autocomplete="off"></textarea>
+        <textarea id="chat-input" rows="1" placeholder="Ask Aria anything…" autocomplete="off" aria-label="Message"></textarea>
         <button type="submit" id="send">Send</button>
       </form>
     </section>
@@ -51,11 +55,11 @@
       <div class="cards">
         <form id="fact-form" class="card">
           <h2>Teach a fact</h2>
-          <p class="hint">Game facts, strategies, server rules, anything you want it to know.</p>
+          <p class="hint">Game facts, strategies, server rules, anything you want her to know.</p>
           <label>Topic or question
             <input name="title" required placeholder="e.g. Best way to recontain SCP-106">
           </label>
-          <label>What it should know
+          <label>What she should know
             <textarea name="text" rows="5" required placeholder="Write the fact or answer here…"></textarea>
           </label>
           <label>Tags <span class="muted">(optional, comma separated)</span>
@@ -65,16 +69,29 @@
           <p class="form-msg" aria-live="polite"></p>
         </form>
 
-        <form id="code-form" class="card">
+        <form id="word-form" class="card">
+          <h2>Teach a word</h2>
+          <p class="hint">Slang, short forms or your own names for things. You can also just say <code>tp means teleport</code> in the chat.</p>
+          <label>Word
+            <input name="word" required placeholder="e.g. tp">
+          </label>
+          <label>Means
+            <input name="meaning" required placeholder="e.g. teleport">
+          </label>
+          <button type="submit">Save word</button>
+          <p class="form-msg" aria-live="polite"></p>
+        </form>
+
+        <form id="code-form" class="card wide">
           <h2>Add a plugin code example</h2>
-          <p class="hint">Paste working C# code. The bot copies its framework and style when writing new plugins.</p>
+          <p class="hint">Paste working C# code. She copies its framework and style when writing new plugins.</p>
           <label>Name
             <input name="title" required placeholder="e.g. LabAPI: kill players who touch the Tesla gate">
           </label>
           <label>Framework
             <select name="framework">
-              <option>LabAPI</option>
               <option>EXILED</option>
+              <option>LabAPI</option>
               <option>Other</option>
             </select>
           </label>
@@ -82,7 +99,7 @@
             <textarea name="text" rows="2" placeholder="Short description of the example"></textarea>
           </label>
           <label>C# code
-            <textarea name="code" rows="12" required class="mono" placeholder="using LabApi.Loader.Features.Plugins; …"></textarea>
+            <textarea name="code" rows="12" required class="mono" placeholder="using Exiled.API.Features; …"></textarea>
           </label>
           <label>Tags <span class="muted">(optional)</span>
             <input name="tags" placeholder="tesla, event, damage">
@@ -96,8 +113,14 @@
     <!-- Knowledge -->
     <section id="tab-knowledge" class="panel">
       <div class="kb-toolbar">
-        <input id="kb-search" type="search" placeholder="Search what the bot knows…">
+        <input id="kb-search" type="search" placeholder="Search what Aria knows…" aria-label="Search knowledge">
         <a class="button secondary" href="/api/export">Export learned</a>
+      </div>
+      <div class="filters" role="group" aria-label="Show">
+        <button class="filter active" data-filter="all">Everything</button>
+        <button class="filter" data-filter="learned">Learned from you</button>
+        <button class="filter" data-filter="words">Words</button>
+        <button class="filter" data-filter="hidden">Hidden</button>
       </div>
       <p id="kb-stats" class="muted"></p>
       <div id="kb-list" class="kb-list"></div>

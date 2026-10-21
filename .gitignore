@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 # Everything the bot learns from you is stored here (kept out of git by default)
 data/learned.json
+data/learned.tmp
+data/learned.broken-*.json

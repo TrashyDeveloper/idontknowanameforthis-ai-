@@ -284,7 +284,7 @@
     "id": "seed-keycards",
     "kind": "fact",
     "title": "Keycards",
-    "text": "Keycards open doors, lockers and checkpoints. Roughly from weakest to strongest: Janitor, Scientist, Research Supervisor, Zone Manager, Guard, MTF Private, Containment Engineer, MTF Sergeant, MTF Captain, Facility Manager, Chaos Insurgency access device, and O5 (opens almost everything). You can upgrade keycards in SCP-914 on Fine. Names and permissions have changed between versions.",
+    "text": "Keycards open doors, lockers and checkpoints. In current versions they are (roughly weakest to strongest): Janitor, Scientist, Research Coordinator, Zone Manager, Guard, Containment Engineer, MTF Private, MTF Operative, MTF Captain, Facility Manager, Chaos Insurgency access device, and O5 (opens almost everything). You can upgrade keycards in SCP-914 on Fine. In plugin code they are ItemType.KeycardJanitor, KeycardScientist, KeycardResearchCoordinator, KeycardZoneManager, KeycardGuard, KeycardContainmentEngineer, KeycardMTFPrivate, KeycardMTFOperative, KeycardMTFCaptain, KeycardFacilityManager, KeycardChaosInsurgency and KeycardO5.",
     "tags": [
       "keycard",
       "card",
@@ -499,5 +499,67 @@
       "exiled",
       "console"
     ]
+  },
+  {
+    "id": "seed-code-exiled-custom-role",
+    "kind": "code",
+    "title": "EXILED: custom role example (CustomRoles)",
+    "text": "A complete custom role made with Exiled.CustomRoles: a Class-D 'Juggernaut' with 300 HP, a medkit and a janitor keycard, plus the plugin class that registers it. Needs the Exiled.CustomRoles plugin on the server and a reference to Exiled.CustomRoles.dll. Checked against EXILED 9.15.2.",
+    "framework": "EXILED",
+    "code": "using System.Collections.Generic;\nusing Exiled.API.Features;\nusing Exiled.API.Features.Attributes;\nusing Exiled.API.Features.Spawn;\nusing Exiled.CustomRoles.API.Features;\nusing PlayerRoles;\n\nnamespace MyCustomRoles\n{\n    // A Class-D with extra health and a medkit. 20% chance to replace a spawning Class-D, max 1 per round.\n    [CustomRole(RoleTypeId.ClassD)]\n    public class Juggernaut : CustomRole\n    {\n        public override uint Id { get; set; } = 1001;\n        public override string Name { get; set; } = \"Juggernaut\";\n        public override string Description { get; set; } = \"A tough Class-D with extra health.\";\n        public override string CustomInfo { get; set; } = \"Juggernaut\";\n        public override int MaxHealth { get; set; } = 300;\n        public override RoleTypeId Role { get; set; } = RoleTypeId.ClassD;\n        public override float SpawnChance { get; set; } = 20;\n\n        // Items are given by name: ItemType names, or the names of custom items.\n        public override List<string> Inventory { get; set; } = new()\n        {\n            $\"{ItemType.Medkit}\",\n            $\"{ItemType.KeycardJanitor}\",\n        };\n\n        public override SpawnProperties SpawnProperties { get; set; } = new()\n        {\n            Limit = 1,\n        };\n\n        protected override void RoleAdded(Player player)\n        {\n            player.ShowHint(\"You are the <color=red>Juggernaut</color>!\", 5);\n        }\n    }\n\n    // Register the role in your plugin:\n    public class Plugin : Exiled.API.Features.Plugin<Config>\n    {\n        public override string Name => \"MyCustomRoles\";\n        public override string Author => \"You\";\n\n        public override void OnEnabled()\n        {\n            CustomRole.RegisterRoles(false, null);\n            base.OnEnabled();\n        }\n\n        public override void OnDisabled()\n        {\n            CustomRole.UnregisterRoles();\n            base.OnDisabled();\n        }\n    }\n\n    public class Config : Exiled.API.Interfaces.IConfig\n    {\n        public bool IsEnabled { get; set; } = true;\n        public bool Debug { get; set; } = false;\n    }\n}",
+    "tags": [
+      "exiled",
+      "custom",
+      "role",
+      "customrole",
+      "example",
+      "plugin",
+      "spawn",
+      "health",
+      "inventory",
+      "register"
+    ],
+    "weight": 1.2
+  },
+  {
+    "id": "seed-code-exiled-custom-item",
+    "kind": "code",
+    "title": "EXILED: custom item example (CustomItems)",
+    "text": "A custom item made with Exiled.CustomItems: a 'Lucky Coin' that heals on heads and hurts on tails. Shows how to subscribe to events inside a custom item and check that the item is yours. Needs the Exiled.CustomItems plugin on the server and a reference to Exiled.CustomItems.dll. Checked against EXILED 9.15.2.",
+    "framework": "EXILED",
+    "code": "using Exiled.API.Features.Attributes;\nusing Exiled.API.Features.Spawn;\nusing Exiled.CustomItems.API.Features;\nusing Exiled.Events.EventArgs.Player;\n\nnamespace MyCustomItems\n{\n    // A coin that heals you on heads and hurts you on tails.\n    [CustomItem(ItemType.Coin)]\n    public class LuckyCoin : CustomItem\n    {\n        public override uint Id { get; set; } = 2001;\n        public override string Name { get; set; } = \"Lucky Coin\";\n        public override string Description { get; set; } = \"Flip it: heads heals you, tails hurts you.\";\n        public override float Weight { get; set; } = 0.1f;\n        public override ItemType Type { get; set; } = ItemType.Coin;\n        public override SpawnProperties SpawnProperties { get; set; } = new();\n\n        protected override void SubscribeEvents()\n        {\n            Exiled.Events.Handlers.Player.FlippingCoin += OnFlippingCoin;\n            base.SubscribeEvents();\n        }\n\n        protected override void UnsubscribeEvents()\n        {\n            Exiled.Events.Handlers.Player.FlippingCoin -= OnFlippingCoin;\n            base.UnsubscribeEvents();\n        }\n\n        private void OnFlippingCoin(FlippingCoinEventArgs ev)\n        {\n            // Only react to coins that are this custom item.\n            if (!Check(ev.Item))\n                return;\n\n            if (ev.IsTails)\n                ev.Player.Hurt(20, \"Bad luck\");\n            else\n                ev.Player.Heal(20);\n        }\n    }\n\n    // Register it in your plugin's OnEnabled():   CustomItem.RegisterItems();\n    // and unregister it in OnDisabled():          CustomItem.UnregisterItems();\n    // Give it to a player in code:                CustomItem.TryGive(player, 2001);\n}",
+    "tags": [
+      "exiled",
+      "custom",
+      "item",
+      "customitem",
+      "example",
+      "plugin",
+      "coin",
+      "heal",
+      "hurt",
+      "register"
+    ],
+    "weight": 1.2
+  },
+  {
+    "id": "seed-code-exiled-custom-ability",
+    "kind": "code",
+    "title": "EXILED: custom ability example (ActiveAbility)",
+    "text": "An active custom ability made with Exiled.CustomRoles: 'Speed Boost' gives the MovementBoost effect for 10 seconds with a 60 second cooldown. Players use it with the .special console command. Shows how to attach it to a custom role. Checked against EXILED 9.15.2.",
+    "framework": "EXILED",
+    "code": "using System.Collections.Generic;\nusing Exiled.API.Enums;\nusing Exiled.API.Features;\nusing Exiled.CustomRoles.API.Features;\n\nnamespace MyCustomRoles\n{\n    // An active ability: the player uses it with the \".special\" console command (key bind it in-game).\n    public class SpeedBoost : ActiveAbility\n    {\n        public override string Name { get; set; } = \"Speed Boost\";\n        public override string Description { get; set; } = \"Run faster for 10 seconds.\";\n        public override float Duration { get; set; } = 10f;\n        public override float Cooldown { get; set; } = 60f;\n\n        protected override void AbilityUsed(Player player)\n        {\n            player.EnableEffect(EffectType.MovementBoost, 30, Duration);\n            player.ShowHint(\"Speed Boost activated!\", 3);\n        }\n\n        protected override void AbilityEnded(Player player)\n        {\n            player.ShowHint(\"Speed Boost has worn off.\", 3);\n        }\n    }\n\n    // Give the ability to a custom role (see the custom role example for the rest of the role):\n    //     public override List<CustomAbility>? CustomAbilities { get; set; } = new() { new SpeedBoost() };\n    // Players who get the role get the ability automatically.\n    // In your plugin's OnEnabled() you can also register abilities: CustomAbility.RegisterAbilities();\n}",
+    "tags": [
+      "exiled",
+      "custom",
+      "ability",
+      "abilities",
+      "activeability",
+      "example",
+      "special",
+      "effect",
+      "speed"
+    ],
+    "weight": 1.2
   }
 ]

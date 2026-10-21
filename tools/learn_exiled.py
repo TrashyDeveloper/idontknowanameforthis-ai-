@@ -7,8 +7,13 @@ Usage:
 It writes data/packs/exiled.json, a "knowledge pack" Aria loads on startup, with:
   * every event (what it does, what `ev` contains, whether it can be cancelled, how to subscribe)
   * the public API (Player, Server, Map, Room, Door, ...) with each member's description
+  * the CustomRoles and CustomItems APIs (making your own roles, abilities and items)
   * enums (RoleTypeId-style lists such as DamageType, EffectType, DoorType, ...)
   * the official example plugin's source files
+  * real source of the CustomRoles/CustomItems commands and event handlers, Exiled.Events'
+    commands, features and internal handlers, and its config/csproj
+  * every Harmony patch: which game method it changes and which events it fires
+    (prefix/postfix patches are kept as full Harmony examples)
 
 EXILED is made by the ExMod Team and licensed under CC BY-SA 3.0; the generated pack keeps
 that attribution and license.
@@ -30,6 +35,18 @@ ZIP_URL = "https://codeload.github.com/ExMod-Team/EXILED/zip/refs/heads/master"
 REPO_URL = "https://github.com/ExMod-Team/EXILED"
 OUT = Path(__file__).resolve().parent.parent / "data" / "packs" / "exiled.json"
 MEMBERS_PER_ENTRY = 25
+MAX_SOURCE_CHARS = 12000  # longer files are cut, with a link to the full file
+BLOB_URL = REPO_URL + "/blob/master/EXILED/"
+
+# Folders whose real source code Aria keeps as examples (relative to the EXILED folder).
+SOURCE_FOLDERS = [
+    "Exiled.CustomRoles/Commands", "Exiled.CustomRoles/Events", "Exiled.CustomRoles/CustomRoles.cs",
+    "Exiled.CustomRoles/Config.cs", "Exiled.CustomRoles/API/Extensions.cs",
+    "Exiled.CustomItems/Commands", "Exiled.CustomItems/Events", "Exiled.CustomItems/Patches",
+    "Exiled.CustomItems/CustomItems.cs", "Exiled.CustomItems/Config.cs", "Exiled.CustomItems/API/Extensions.cs",
+    "Exiled.Events/Attributes", "Exiled.Events/Commands", "Exiled.Events/Features", "Exiled.Events/Handlers/Internal",
+    "Exiled.Events/Config.cs", "Exiled.Events/Events.cs", "Exiled.Events/Exiled.Events.csproj",
+]
 
 
 # ---------- reading C# doc comments ----------
@@ -186,7 +203,9 @@ TYPE_DECL = re.compile(r"public (?:static |sealed |abstract |partial |readonly )
 def learn_api(root: Path, folders: list[str]) -> list[dict]:
     entries = []
     for folder in folders:
-        base = root / "Exiled.API" / folder
+        base = root / folder
+        if not base.is_dir():
+            continue
         for path in sorted(base.rglob("*.cs")):
             source = path.read_text(encoding="utf-8-sig")
             namespace = (re.search(r"namespace ([\w.]+)", source) or [None, ""])[1]
@@ -222,12 +241,13 @@ def learn_api(root: Path, folders: list[str]) -> list[dict]:
                     if chunk:
                         lines.append("Values:" if info["kind"] == "enum" else "Members:")
                         lines += [f"- `{sig}`" + (f": {doc}" if doc else "") for sig, doc in chunk]
+                    extra = ["custom", "role"] if "CustomRoles" in namespace else ["custom", "item"] if "CustomItems" in namespace else []
                     entries.append({
                         "id": f"exiled-api-{namespace}.{name}-{n}",
                         "kind": "fact",
                         "title": f"EXILED API: {name}{part}",
                         "text": "\n".join(lines),
-                        "tags": ["exiled", "api", info["kind"], name.lower(), *camel_words(name)],
+                        "tags": ["exiled", "api", info["kind"], name.lower(), *camel_words(name), *extra],
                     })
     return entries
 
@@ -253,6 +273,101 @@ def learn_examples(root: Path) -> list[dict]:
     return entries
 
 
+# ---------- source files and Harmony patches ----------
+
+def strip_header(source: str) -> str:
+    return re.sub(r"\A(?://[^\n]*\n)+\s*", "", source).strip()
+
+
+def cut(code: str, rel: str) -> str:
+    if len(code) <= MAX_SOURCE_CHARS:
+        return code
+    return code[:MAX_SOURCE_CHARS].rsplit("\n", 1)[0] + f"\n\n// ... (cut here; full file: {BLOB_URL}{rel})"
+
+
+def learn_sources(root: Path) -> list[dict]:
+    entries = []
+    for target in SOURCE_FOLDERS:
+        path = root / target
+        files = [path] if path.is_file() else sorted(path.rglob("*.cs")) if path.is_dir() else []
+        for f in files:
+            rel = f.relative_to(root).as_posix()
+            source = f.read_text(encoding="utf-8-sig")
+            summaries = [s for s, decl, _ in doc_blocks(source) if TYPE_DECL.match(decl) or " class " in decl]
+            project = rel.split("/")[0]
+            extra = ["custom", "role"] if "CustomRoles" in rel else ["custom", "item"] if "CustomItems" in rel else []
+            if "/Commands/" in rel:
+                extra.append("command")
+            entries.append({
+                "id": f"exiled-source-{rel}",
+                "kind": "code",
+                "title": f"EXILED source: {rel}",
+                "text": ((summaries[0] + " ") if summaries and summaries[0] else "") +
+                        f"Real source code from {project} ({BLOB_URL}{rel}).",
+                "code": cut(strip_header(source), rel),
+                "framework": "EXILED",
+                "tags": ["exiled", "source", *camel_words(f.stem), *[w.lower() for w in rel.split("/")[:-1]], *extra],
+            })
+    return entries
+
+
+def patch_info(source: str) -> dict:
+    targets = re.findall(r"\[HarmonyPatch\(typeof\(([\w.]+)\)(?:,\s*nameof\(([\w.]+)\)|,\s*\"(\w+)\")?", source)
+    methods = []
+    for cls, nameof, literal in targets:
+        member = (nameof or literal or "").split(".")[-1]
+        methods.append(f"{cls.split('.')[-1]}.{member}" if member else cls.split(".")[-1])
+    events = [f"{c.split('.')[-1]}.{e.split('.')[-1]}"
+              for c, e in re.findall(r"\[EventPatch\(typeof\(([\w.]+)\),\s*nameof\(([\w.]+)\)\)", source)]
+    kinds = [k for k in ("Prefix", "Postfix", "Transpiler", "Finalizer") if re.search(rf"\b{k}\(", source)]
+    return {"methods": methods, "events": events, "kinds": kinds}
+
+
+def learn_patches(root: Path, events: list[dict]) -> list[dict]:
+    base = root / "Exiled.Events" / "Patches"
+    entries = []
+    hooks: dict[str, list[str]] = {}
+    for f in sorted(base.rglob("*.cs")):
+        rel = f.relative_to(root).as_posix()
+        short = f.relative_to(base).as_posix()
+        source = f.read_text(encoding="utf-8-sig")
+        info = patch_info(source)
+        summary = next((s for s, decl, _ in doc_blocks(source) if " class " in decl), "")
+        lines = [summary or f"Harmony patch {short}."]
+        if info["methods"]:
+            lines.append("Game method patched: " + ", ".join(f"`{m}`" for m in info["methods"]) + ".")
+        if info["events"]:
+            lines.append("Fires the EXILED events: " + ", ".join(f"`{e}`" for e in info["events"]) + ".")
+        if info["kinds"]:
+            lines.append("Harmony patch type: " + ", ".join(info["kinds"]) + ".")
+        lines.append(f"Source: {BLOB_URL}{rel}")
+        for e in info["events"]:
+            hooks.setdefault(e, []).extend(info["methods"])
+        readable = info["kinds"] and "Transpiler" not in info["kinds"]
+        entry = {
+            "id": f"exiled-patch-{short}",
+            "kind": "code" if readable else "fact",
+            "title": f"EXILED patch: {short}",
+            "text": "\n".join(lines),
+            "framework": "EXILED",
+            "tags": ["exiled", "patch", "harmony", *[k.lower() for k in info["kinds"]], *camel_words(f.stem),
+                     *[w.lower() for w in short.split("/")[:-1]]],
+        }
+        if readable:
+            # Prefix/postfix patches are easy to read, so they're kept as Harmony examples.
+            entry["code"] = cut(strip_header(source), rel)
+            entry["tags"] += ["example", "harmony", "patch"]
+        entries.append(entry)
+    # Tell each event which game method it hooks into.
+    for ev in events:
+        name = ev["title"].removeprefix("EXILED event: ")
+        if hooks.get(name):
+            methods = ", ".join(f"`{m}`" for m in dict.fromkeys(hooks[name]))
+            ev["text"] = ev["text"].replace("\n", f"\nHooks into the game method {methods}.\n", 1) \
+                if "\n" in ev["text"] else ev["text"] + f"\nHooks into the game method {methods}."
+    return entries
+
+
 # ---------- main ----------
 
 def find_root(path: Path) -> Path:
@@ -274,6 +389,7 @@ def download(tmp: Path) -> Path:
 def build_pack(root: Path) -> dict:
     props = (root / "EXILED.props").read_text(encoding="utf-8-sig") if (root / "EXILED.props").exists() else ""
     version = (re.search(r"<Version[^>]*>([^<]+)</Version>", props) or [None, "unknown"])[1]
+    events = learn_events(root, version)
     entries = [
         {
             "id": "exiled-overview",
@@ -285,13 +401,20 @@ def build_pack(root: Path) -> dict:
                      "`Exiled.Events.Handlers.<Category>.<Event> += handler;` and unsubscribe in OnDisabled(). "
                      "Events whose args implement IDeniableEvent can be cancelled with `ev.IsAllowed = false`. "
                      "Commands use the game's CommandSystem: `[CommandHandler(typeof(RemoteAdminCommandHandler))]` on a "
-                     "class implementing `ICommand`. Event categories: " +
+                     "class implementing `ICommand`. Custom roles inherit `CustomRole` (Exiled.CustomRoles.API.Features) "
+                     "and custom items inherit `CustomItem` (Exiled.CustomItems.API.Features); both need the "
+                     "Exiled.CustomRoles / Exiled.CustomItems plugins installed and are registered with "
+                     "`CustomRole.RegisterRoles(...)` / `CustomItem.RegisterItems()`. Event categories: " +
                      ", ".join(sorted(p.stem for p in (root / "Exiled.Events" / "Handlers").glob("*.cs"))) + "."),
             "tags": ["exiled", "overview", "framework", "plugin", "event", "category"],
         },
-        *learn_events(root, version),
-        *learn_api(root, ["Features", "Enums", "Extensions"]),
+        *events,
+        *learn_api(root, ["Exiled.API/Features", "Exiled.API/Enums", "Exiled.API/Extensions",
+                          "Exiled.API/Interfaces", "Exiled.CustomRoles/API", "Exiled.CustomItems/API",
+                          "Exiled.Events/EventArgs/Interfaces", "Exiled.Events/Features"]),
         *learn_examples(root),
+        *learn_sources(root),
+        *learn_patches(root, events),
     ]
     seen = set()
     unique = []

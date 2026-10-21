@@ -4,8 +4,9 @@ from pathlib import Path
 import pytest
 
 from app import create_app
-from aria.brain import Brain, format_knowledge, gather_context, wants_code
-from aria.knowledge import KnowledgeBase, stem, tokenize
+from aria.brain import Brain, format_knowledge, gather_context
+from aria.language import stem, tokenize, wants_code
+from aria.knowledge import KnowledgeBase
 
 SEED = Path(__file__).parent.parent / "data" / "seed_knowledge.json"
 
@@ -240,3 +241,113 @@ def test_unsure_answers_show_the_closest_thing(client):
 def test_nothing_known_says_so(client):
     meta, text = chat(client, "xyzzy plugh")
     assert "don't know" in text and meta["sources"] == []
+
+
+# ---------- understanding casual language ----------
+
+@pytest.mark.parametrize("question, expected", [
+    ("i need you aria to do a example about exiled custom roles", "seed-code-exiled-custom-role"),
+    ("yo can u make me a custum item exmple in exild", "seed-code-exiled-custom-item"),
+    ("how do i make a custom ability", "seed-code-exiled-custom-ability"),
+    ("hey aria wats up with the larry guy", "seed-106"),
+    ("whats the best gun", "seed-weapons"),
+    ("how does exiled patch the hurting event", "exiled-patch-Events/Player/Hurting.cs"),
+])
+def test_understands_casual_sentences(kb, question, expected):
+    brain = Brain(kb, use_claude=False)
+    assert brain.reply(question).sources[0].id == expected
+
+
+def test_filler_words_are_ignored():
+    assert tokenize("i need you aria to do a example about exiled custom roles") == \
+        tokenize("example exiled custom roles")
+
+
+def test_typos_are_corrected(kb):
+    groups = kb.analyze("exild custum exmple").groups
+    assert [next(iter(g)) for g in groups] == ["exil", "custom", "exampl"]
+
+
+def test_synonyms_are_searched(kb):
+    group = kb.analyze("damage").groups[0]
+    assert group["damag"] == 1.0 and group["hurt"] == 0.5
+
+
+# ---------- self-learning ----------
+
+def test_thumbs_up_links_the_users_words_to_the_answer(tmp_path):
+    learned = tmp_path / "learned.json"
+    kb = KnowledgeBase(SEED, learned)
+    question = "zorblax spawn thing"
+    kb.feedback(["seed-code-exiled-spawn-item"], helpful=True, question=question)
+    assert kb.search(question, packs=False)[0][0].id == "seed-code-exiled-spawn-item"
+    # ...and it's remembered after a restart.
+    assert KnowledgeBase(SEED, learned).search(question, packs=False)[0][0].id == "seed-code-exiled-spawn-item"
+
+
+def test_teaching_a_word_in_chat(client):
+    _, text = chat(client, "glorp means warhead")
+    assert "glorp" in text and "warhead" in text
+    meta, _ = chat(client, "how does the glorp work")
+    assert meta["sources"][0]["id"] == "seed-warhead"
+    words = client.get("/api/knowledge").get_json()["word_list"]
+    assert words == {"glorp": ["warhead"]}
+    assert client.delete("/api/words/glorp").status_code == 200
+
+
+def test_teaching_a_word_with_the_form(client):
+    assert client.post("/api/words", json={"word": "tp", "meaning": "teleport"}).status_code == 201
+    assert client.post("/api/words", json={"word": "", "meaning": "x"}).status_code == 400
+
+
+def test_forget_removes_something_taught(client):
+    chat(client, "my favorite scp is SCP-106")
+    _, text = chat(client, "forget that my favorite scp is 106")
+    assert "forgot" in text
+    _, text = chat(client, "forget that i like pizza")
+    assert "couldn't find" in text
+
+
+@pytest.mark.parametrize("message", ["my plugin is not working", "my server has an error", "learn about exiled"])
+def test_help_requests_are_not_saved_as_facts(client, message):
+    _, text = chat(client, message)
+    assert "I'll remember" not in text
+
+
+def test_teaching_the_same_fact_twice_keeps_one(kb):
+    a = kb.add("fact", "x", "the same fact")
+    b = kb.add("fact", "x", "the same fact")
+    assert a.id == b.id
+
+
+def test_hidden_entries_can_be_restored(client):
+    client.delete("/api/knowledge/seed-173")
+    hidden = client.get("/api/knowledge?hidden=1").get_json()["entries"]
+    assert [e["id"] for e in hidden] == ["seed-173"]
+    assert client.post("/api/knowledge/seed-173/restore").status_code == 200
+    assert client.get("/api/knowledge?hidden=1").get_json()["entries"] == []
+
+
+def test_damaged_learned_file_is_backed_up(tmp_path):
+    learned = tmp_path / "learned.json"
+    learned.write_text("{ this is not json", encoding="utf-8")
+    kb = KnowledgeBase(SEED, learned)
+    assert kb.stats()["learned"] == 0
+    assert list(tmp_path.glob("learned.broken-*.json"))
+
+
+def test_bad_requests_dont_crash(client):
+    assert client.post("/api/chat", data="not json").status_code == 400
+    assert client.post("/api/chat", json=["a list"]).status_code == 400
+    assert client.post("/api/feedback", json={"sources": "oops"}).status_code == 200
+    res = client.post("/api/knowledge", json={"kind": "fact", "title": "t", "text": "x", "tags": "a, b"})
+    assert res.get_json()["entry"]["tags"] == ["a", "b"]
+
+
+def test_exiled_pack_includes_custom_roles_items_sources_and_patches(kb):
+    ids = {e.id for e in kb.all_entries()}
+    assert any(i.startswith("exiled-api-Exiled.CustomRoles.API.Features.CustomRole") for i in ids)
+    assert any(i.startswith("exiled-api-Exiled.CustomItems.API.Features.CustomItem") for i in ids)
+    assert "exiled-source-Exiled.CustomRoles/Commands/Give.cs" in ids
+    assert "exiled-patch-Events/Player/Hurting.cs" in ids
+    assert "PlayerStats.DealDamage" in kb.get("exiled-event-Player.Hurting").text

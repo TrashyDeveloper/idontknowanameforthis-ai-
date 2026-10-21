@@ -1,35 +1,32 @@
-"""The bot's "brain": picks relevant knowledge and turns it into an answer.
+"""Aria's "brain": picks relevant knowledge and turns it into an answer.
 
 Two modes:
   * Claude mode (when an Anthropic API key is available): the relevant knowledge and
     code examples are given to Claude, which writes a full answer or C# plugin.
   * Offline mode (no key): answers straight from the knowledge base. It can only
-    repeat what it has been taught, but it works with no account and no internet.
+    show what it has been taught, but it works with no account and no internet.
 """
 
 from __future__ import annotations
 
 import os
-import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from .knowledge import Entry, KnowledgeBase
+from .knowledge import Entry, KnowledgeBase, Query
+from .language import CODE_REQUEST, wants_code, wants_examples, wants_list
 
 MODEL = os.environ.get("ARIA_MODEL", "claude-opus-5-5")
 EFFORT = os.environ.get("ARIA_EFFORT", "medium")
 HISTORY_TURNS = 10  # how many earlier messages are sent along for context
-MIN_OFFLINE_COVERAGE = 0.6  # the offline bot needs most of the question's words to match
+MIN_OFFLINE_COVERAGE = 0.6  # below this share of matching words, Aria says she's not sure
 RELEVANCE_CUTOFF = 0.35  # drop search results scoring under 35% of the best one
-
-CODE_WORDS = {
-    "plugin", "plugins", "code", "c#", "csharp", "script", "event", "events", "handler",
-    "command", "exiled", "labapi", "nwapi", "dll", "compile", "method", "config", "api",
-    "property", "properties", "enum", "args", "eventargs", "ev", "hook", "server-side", "harmony",
-}
 
 SYSTEM_PROMPT = """You are Aria, an assistant specialised in the game SCP: Secret Laboratory \
 (by Northwood Studios) and in writing C# server plugins for it.
+
+People talk to you casually, with typos, slang and incomplete sentences. Work out what they \
+mean and answer that; only ask a question back when the request could mean very different things.
 
 Each user message may start with a <knowledge> block holding entries from your knowledge base. \
 Entries with a pack attribute were extracted from that framework's real source code at the \
@@ -48,11 +45,10 @@ any member you are unsure of so the user can check it.
 
 Keep answers friendly and to the point. Use Markdown, with ```csharp blocks for code."""
 
-
 DONT_KNOW = ("I don't know anything about that yet. You can teach me: press 👎 and type the right answer, "
              "or just tell me (for example *remember: ...*).")
-LIST_REQUEST = re.compile(r"\b(what (?:do )?you know|show me|list|examples?|everything|overview|tell me about)\b", re.I)
-EXAMPLES = re.compile(r"\bexamples?\b", re.I)
+OFFLINE_CODE_NOTE = ("_I'm in offline mode, so I can only show code I've learned. With an Anthropic API key "
+                     "I can write new plugins for you (see the README)._")
 
 
 def render_entry(e: Entry) -> str:
@@ -73,28 +69,23 @@ class Reply:
     chunks: Iterator[str]
 
 
-def wants_code(message: str) -> bool:
-    words = set(re.findall(r"[a-z#]+", message.lower()))
-    # A code name like "DamageType" or "Player.Hurting" also means it's a code question.
-    return bool(words & CODE_WORDS) or bool(re.search(r"\b[A-Z][a-z]+[A-Z]\w*|\b[A-Z]\w+\.[A-Z]\w+", message))
-
-
 def relevant(results: list[tuple[Entry, float]]) -> list[Entry]:
     if not results:
         return []
-    top = results[0][1]
+    top = max(score for _, score in results)
     return [e for e, score in results if score >= top * RELEVANCE_CUTOFF]
 
 
 def gather_context(kb: KnowledgeBase, message: str) -> list[Entry]:
     # Knowledge packs (API references) are only searched for plugin/code questions,
     # so gameplay questions get gameplay answers.
-    coding = wants_code(message)
-    facts = relevant(kb.search(message, limit=6, kinds=("fact", "qa"), packs=coding))
-    code = relevant(kb.search(message, limit=4, kinds=("code",))) if coding else []
-    if wants_code(message) and not code:
+    query = kb.analyze(message)
+    coding = wants_code(message, query.tokens)
+    facts = relevant(kb.search(query, limit=6, kinds=("fact", "qa"), packs=coding))
+    code = relevant(kb.search(query, limit=6, kinds=("code",))) if coding else []
+    if coding and not code:
         # A plugin request with no keyword match still benefits from seeing how plugins look.
-        code = [e for e in kb.all_entries() if e.kind == "code"][:2]
+        code = [e for e in kb.all_entries() if e.kind == "code" and not e.pack][:2]
     return facts + code
 
 
@@ -138,13 +129,16 @@ class Brain:
 
     def _offline_answer(self, message: str) -> tuple[str, list[Entry]]:
         """Answers with whatever matches best. Returns the answer and the entries it used."""
-        coding = wants_code(message)
-        facts = self.kb.search(message, limit=8, kinds=("fact", "qa"), packs=coding)
-        codes = self.kb.search(message, limit=8, kinds=("code",)) if coding else []
+        query: Query = self.kb.analyze(message)
+        coding = wants_code(message, query.tokens)
+        facts = self.kb.search(query, limit=8, kinds=("fact", "qa"), packs=coding)
+        codes = self.kb.search(query, limit=8, kinds=("code",)) if coding else []
+        asked_for_code = bool(CODE_REQUEST.search(message)) or wants_examples(message) or \
+            bool({"exampl", "sampl", "snippet", "templat"} & set(query.tokens))
 
-        if LIST_REQUEST.search(message):
+        if wants_list(message):
             # "show me examples", "what do you know about X": show the best match and list the rest.
-            pool = codes if EXAMPLES.search(message) and codes else sorted(facts + codes, key=lambda r: r[1], reverse=True)
+            pool = codes if wants_examples(message) and codes else sorted(facts + codes, key=lambda r: r[1], reverse=True)
             if not pool:
                 return DONT_KNOW, []
             entries = relevant(pool)
@@ -152,23 +146,29 @@ class Brain:
             if len(entries) > 1:
                 answer += "\n\n**Other things I know about this:**\n" + "\n".join(f"- {e.title}" for e in entries[1:])
                 answer += "\n\n_Click one below to see it._"
+            if entries[0].kind == "code":
+                answer += "\n\n" + OFFLINE_CODE_NOTE
             return answer, entries
 
-        # Prefer a code example for plugin questions, unless a reference page matches clearly better.
-        if codes and not (facts and facts[0][1] > codes[0][1] * 1.2):
-            best, others = codes[0][0], relevant(codes)[1:4]
-        elif facts:
-            best, others = facts[0][0], relevant(facts)[1:4]
-        else:
+        # For "make me an example/plugin" show code. Otherwise show whichever matches more of the
+        # question (a code example wins ties, unless a reference page scores clearly better).
+        if not codes and not facts:
             return DONT_KNOW, []
+        use_code = bool(codes)
+        if codes and facts and not asked_for_code:
+            code_cov, fact_cov = self.kb.coverage(codes[0][0], query), self.kb.coverage(facts[0][0], query)
+            use_code = code_cov > fact_cov or code_cov == fact_cov and facts[0][1] <= codes[0][1] * 1.2
+        results = codes if use_code else facts
+        best, others = results[0][0], relevant(results)[1:4]
         answer = render_entry(best)
-        if self.kb.coverage(best, message) < MIN_OFFLINE_COVERAGE:
+        if self.kb.coverage(best, query) < MIN_OFFLINE_COVERAGE:
             answer = "I'm not sure I know exactly that, but here's the closest thing I know:\n\n" + answer
+        elif best.kind == "code" and asked_for_code:
+            answer = "Here's an example I know:\n\n" + answer
         if others:
             answer += "\n\n_Related: " + " · ".join(e.title for e in others) + "_"
         if best.kind == "code":
-            answer += ("\n\n_Offline mode can only show examples I've been taught. Add an Anthropic API key "
-                       "so I can write new plugins for you (see the README)._")
+            answer += "\n\n" + OFFLINE_CODE_NOTE
         return answer, [best, *others]
 
     # ---------- Claude mode ----------
