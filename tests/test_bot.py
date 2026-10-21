@@ -176,3 +176,23 @@ def test_claude_mode_builds_valid_conversation(kb, monkeypatch):
     assert "seed-173" in sent["messages"][-1]["content"]
     assert sent["model"] == "claude-opus-5-5"
     assert sent["fallbacks"] == "default"
+
+
+def test_statements_about_the_user_are_remembered(client):
+    _, text = chat(client, "my favorite scp is SCP-106")
+    assert "remember" in text.lower()
+    meta, text = chat(client, "which is my favorite scp?")
+    assert "You told me" in text and "SCP-106" in text
+    assert meta["sources"][0]["source"] == "user"
+
+
+@pytest.mark.parametrize("message", ["my favorite scp is what?", "what is my favorite scp", "SCP-106 is my favorite"])
+def test_questions_are_not_mistaken_for_statements(client, message):
+    _, text = chat(client, message)
+    assert "I'll remember" not in text
+
+
+def test_unknown_answer_lists_no_sources(client):
+    meta, text = chat(client, "which is my favorite scp?")
+    assert "don't know" in text
+    assert meta["sources"] == []

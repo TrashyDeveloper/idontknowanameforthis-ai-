@@ -16,6 +16,8 @@ from aria.knowledge import KnowledgeBase
 
 ROOT = Path(__file__).parent
 REMEMBER = re.compile(r"^\s*(?:remember|learn|note)\s*(?:that)?\s*[:,]?\s+(.+)$", re.IGNORECASE | re.DOTALL)
+# Statements about the user or their server, like "my favorite SCP is 106" or "our server has 30 slots".
+STATEMENT = re.compile(r"^\s*(?:my|our)\s+\w[^?]*\b(?:is|are|was|has|have)\b[^?]+$", re.IGNORECASE)
 
 
 def create_app(seed_path: Path | None = None, learned_path: Path | None = None,
@@ -43,11 +45,11 @@ def create_app(seed_path: Path | None = None, learned_path: Path | None = None,
         if not message:
             return jsonify(error="message is empty"), 400
 
-        # "remember: ..." in the chat teaches a fact directly.
+        # "remember: ..." or a statement like "my favorite SCP is 106" teaches a fact directly.
         match = REMEMBER.match(message)
-        if match:
-            fact = match.group(1).strip()
-            entry = kb.add("fact", fact[:80], fact)
+        fact = match.group(1).strip() if match else message if STATEMENT.match(message) else None
+        if fact:
+            entry = kb.add("fact", fact[:80], fact, tags=["remembered"])
             return Response(_events([{"type": "meta", "mode": brain.mode, "sources": [], "learned": entry.id},
                                      {"type": "text", "text": f"Got it! I'll remember: _{fact}_"}]),
                             mimetype="application/x-ndjson")

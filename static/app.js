@@ -130,9 +130,11 @@ function addFeedback(msg, question, sources) {
     up.disabled = down.disabled = true;
     await sendFeedback({ sources: ids, helpful: true });
     up.textContent = "👍 Thanks!";
+    up.classList.add("chosen");
   };
   down.onclick = () => {
     up.disabled = down.disabled = true;
+    down.classList.add("chosen");
     const box = document.createElement("form");
     box.className = "correction";
     box.innerHTML = `<textarea rows="3" placeholder="What's the right answer? I'll remember it."></textarea>

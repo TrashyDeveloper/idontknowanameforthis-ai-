@@ -103,14 +103,16 @@ class Brain:
         return "claude" if self.use_claude else "offline"
 
     def reply(self, message: str, history: list[dict] | None = None) -> Reply:
-        sources = gather_context(self.kb, message)
         if self.use_claude:
+            sources = gather_context(self.kb, message)
             return Reply("claude", sources, self._claude_answer(message, history or [], sources))
-        return Reply("offline", sources, iter([self._offline_answer(message)]))
+        text, used = self._offline_answer(message)
+        return Reply("offline", used, iter([text]))
 
     # ---------- offline mode ----------
 
-    def _offline_answer(self, message: str) -> str:
+    def _offline_answer(self, message: str) -> tuple[str, list[Entry]]:
+        """Returns the answer and the entries it was built from."""
         if wants_code(message):
             code = self.kb.search(message, limit=1, kinds=("code",))
             if code:
@@ -118,17 +120,22 @@ class Brain:
                 return (f"Here's the closest plugin example I've learned: **{e.title}**"
                         f"{f' ({e.framework})' if e.framework else ''}\n\n{e.text}\n\n```csharp\n{e.code}\n```\n\n"
                         "_Offline mode can only show examples I've been taught. Add an Anthropic API key "
-                        "so I can write new plugins for you (see the README)._")
+                        "so I can write new plugins for you (see the README)._"), [e]
         hits = self.kb.search(message, limit=3, kinds=("fact", "qa"))
         if not hits or self.kb.coverage(hits[0][0], message) < MIN_OFFLINE_COVERAGE:
             return ("I don't know that one yet. You can teach me: press 👎 and type the right answer, "
-                    "or use the **Teach** tab.")
+                    "or just tell me (for example *remember: ...*)."), []
         best = hits[0][0]
-        answer = f"**{best.title}**\n\n{best.text}"
-        related = [e.title for e in relevant(hits)[1:]]
-        if related:
-            answer += "\n\n_Related: " + " · ".join(related) + "_"
-        return answer
+        if "remembered" in best.tags:
+            answer = f"You told me: _{best.text}_"
+        elif best.text.startswith(best.title):
+            answer = best.text
+        else:
+            answer = f"**{best.title}**\n\n{best.text}"
+        others = relevant(hits)[1:]
+        if others:
+            answer += "\n\n_Related: " + " · ".join(e.title for e in others) + "_"
+        return answer, [best, *others]
 
     # ---------- Claude mode ----------
 

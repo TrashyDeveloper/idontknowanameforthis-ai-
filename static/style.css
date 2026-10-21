@@ -133,8 +133,9 @@ main { flex: 1; display: flex; width: 100%; max-width: 900px; margin: 0 auto; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--muted); }
 .source { border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
 .source.user { border-color: var(--ok); color: var(--ok); }
-.vote { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer; font-size: 13px; }
-.vote:disabled { opacity: 0.5; cursor: default; }
+.vote { background: none; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer; font-size: 13px; }
+.vote:disabled { opacity: 0.6; cursor: default; }
+.vote.chosen { opacity: 1; border-color: var(--ok); color: var(--ok); }
 .correction { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-width: 720px; }
 .correction textarea { width: 100%; }
 
