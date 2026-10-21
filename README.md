@@ -45,7 +45,9 @@ Aria opens **http://127.0.0.1:5000** in your browser by itself (set `ARIA_NO_BRO
 | Answers | Shows what she knows that matches best | Written by Claude using what she knows |
 | Plugins | Shows the closest example she knows | Writes new plugins based on what she knows |
 
-The badge in the top right of the page shows the current mode.
+The badge in the top right of the page shows the current mode. **Click it to switch** between Claude mode
+and offline mode (switching to Claude mode needs an API key). Aria remembers your choice. You can also start
+her in offline mode with the environment variable `ARIA_MODE=offline`.
 
 ### Turning on Claude mode
 

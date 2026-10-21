@@ -105,6 +105,7 @@ class KnowledgeBase:
         self.hidden: set[str] = set(learned["hidden"])
         self.synonyms: dict[str, list[str]] = learned["synonyms"]  # word -> what it means
         self.associations: dict[str, dict[str, int]] = learned["associations"]  # entry -> {word: count}
+        self.settings: dict = learned["settings"]  # e.g. {"mode": "offline"}
         for entry_id, weight in self.seed_weights.items():
             if entry_id in self.entries:
                 self.entries[entry_id].weight = weight
@@ -113,7 +114,7 @@ class KnowledgeBase:
         self._reindex()
 
     def _read_learned(self) -> dict:
-        data = {"entries": [], "seed_weights": {}, "hidden": [], "synonyms": {}, "associations": {}}
+        data = {"entries": [], "seed_weights": {}, "hidden": [], "synonyms": {}, "associations": {}, "settings": {}}
         if self.learned_path.exists():
             try:
                 data.update(json.loads(self.learned_path.read_text(encoding="utf-8")))
@@ -131,6 +132,7 @@ class KnowledgeBase:
             "hidden": sorted(self.hidden),
             "synonyms": self.synonyms,
             "associations": self.associations,
+            "settings": self.settings,
         }
         self.learned_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.learned_path.with_suffix(".tmp")
@@ -320,6 +322,11 @@ class KnowledgeBase:
                     known.append(meaning)
             self._save()
         return tokens
+
+    def set_setting(self, key: str, value) -> None:
+        with self._lock:
+            self.settings[key] = value
+            self._save()
 
     def forget_word(self, word: str) -> None:
         with self._lock:

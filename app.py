@@ -93,7 +93,15 @@ def create_app(seed_path: Path | None = None, learned_path: Path | None = None,
 
     @app.get("/api/status")
     def status():
-        return jsonify(mode=brain.mode, **kb.stats())
+        return jsonify(mode=brain.mode, key_available=brain.key_available, **kb.stats())
+
+    @app.post("/api/mode")
+    def set_mode():
+        try:
+            brain.set_mode(str(json_body().get("mode") or ""))
+        except ValueError as e:
+            return jsonify(error=str(e)), 400
+        return jsonify(mode=brain.mode)
 
     @app.post("/api/chat")
     def chat():

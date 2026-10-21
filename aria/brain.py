@@ -111,12 +111,28 @@ def claude_available() -> bool:
 class Brain:
     def __init__(self, kb: KnowledgeBase, use_claude: bool | None = None):
         self.kb = kb
-        self.use_claude = claude_available() if use_claude is None else use_claude
+        self.key_available = claude_available() if use_claude is None else use_claude
         self._client = None
+
+    @property
+    def offline_chosen(self) -> bool:
+        """You can choose offline mode even with an API key (the switch on the page, or ARIA_MODE=offline)."""
+        return self.kb.settings.get("mode", os.environ.get("ARIA_MODE", "")).lower() == "offline"
+
+    @property
+    def use_claude(self) -> bool:
+        return self.key_available and not self.offline_chosen
 
     @property
     def mode(self) -> str:
         return "claude" if self.use_claude else "offline"
+
+    def set_mode(self, mode: str) -> None:
+        if mode not in ("claude", "offline"):
+            raise ValueError("mode must be 'claude' or 'offline'")
+        if mode == "claude" and not self.key_available:
+            raise ValueError("Claude mode needs an Anthropic API key. See the README for how to add one.")
+        self.kb.set_setting("mode", mode)
 
     def reply(self, message: str, history: list[dict] | None = None) -> Reply:
         if self.use_claude:

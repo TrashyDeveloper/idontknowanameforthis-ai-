@@ -103,22 +103,40 @@ document.querySelectorAll(".tab").forEach((tab) =>
   })
 );
 
+let status = null;
+
 async function refreshStatus() {
   const el = $("#status");
   try {
-    const s = await (await fetch("/api/status")).json();
+    status = await (await fetch("/api/status")).json();
+    const s = status;
     el.textContent = `${s.mode === "claude" ? "● Claude mode" : "○ Offline mode"} · ${s.learned} learned` +
       (s.words ? ` · ${plural(s.words, "word")}` : "");
     el.className = `status ${s.mode}`;
     el.title = s.mode === "claude"
-      ? "Using Claude to write answers from what she knows."
-      : "No API key found: answers come straight from what she knows. See the README to turn on Claude mode.";
+      ? "Using Claude to write answers from what she knows. Click to switch to offline mode."
+      : s.key_available
+        ? "Answers come straight from what she knows. Click to switch to Claude mode."
+        : "No API key found: answers come straight from what she knows. See the README to turn on Claude mode.";
   } catch {
+    status = null;
     el.textContent = "⚠ Aria isn't running";
     el.className = "status offline";
     el.title = "Start Aria with: python app.py";
   }
 }
+
+// Clicking the badge switches between Claude mode and offline mode.
+$("#status").addEventListener("click", async () => {
+  if (!status) return;
+  const next = status.mode === "claude" ? "offline" : "claude";
+  try {
+    await postJson("/api/mode", { mode: next });
+  } catch (err) {
+    alert(err.message);
+  }
+  refreshStatus();
+});
 
 // ---------- chat ----------
 

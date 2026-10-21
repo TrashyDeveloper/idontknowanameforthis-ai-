@@ -273,6 +273,27 @@ def test_synonyms_are_searched(kb):
     assert group["damag"] == 1.0 and group["hurt"] == 0.5
 
 
+# ---------- switching modes ----------
+
+def test_switch_to_offline_and_back(tmp_path):
+    learned = tmp_path / "learned.json"
+    client = create_app(SEED, learned, use_claude=True).test_client()
+    assert client.get("/api/status").get_json()["mode"] == "claude"
+    assert client.post("/api/mode", json={"mode": "offline"}).get_json()["mode"] == "offline"
+    meta, _ = chat(client, "How do I survive SCP-173?")
+    assert meta["mode"] == "offline"
+    # The choice is remembered after a restart.
+    restarted = create_app(SEED, learned, use_claude=True).test_client()
+    assert restarted.get("/api/status").get_json()["mode"] == "offline"
+    assert restarted.post("/api/mode", json={"mode": "claude"}).get_json()["mode"] == "claude"
+
+
+def test_claude_mode_needs_a_key(client):
+    res = client.post("/api/mode", json={"mode": "claude"})
+    assert res.status_code == 400 and "API key" in res.get_json()["error"]
+    assert client.post("/api/mode", json={"mode": "banana"}).status_code == 400
+
+
 # ---------- self-learning ----------
 
 def test_thumbs_up_links_the_users_words_to_the_answer(tmp_path):

@@ -71,6 +71,8 @@ h1 { margin: 0; font-size: 18px; letter-spacing: 0.06em; }
   white-space: nowrap;
 }
 .status.claude { color: var(--ok); border-color: var(--ok); }
+button.status { background: none; font-weight: normal; cursor: pointer; }
+button.status:hover { color: var(--text); border-color: var(--text); }
 
 .tabs {
   display: flex;
