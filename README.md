@@ -81,6 +81,27 @@ The best way to get good plugin code is to give it **working examples from your 
 were written from memory and are not tested against the latest game version, so check
 them before relying on them. When you find code that compiles and works, add it as an example.
 
+## Knowledge packs
+
+Aria also loads **knowledge packs** from `data/packs/`. These are reference material generated from real
+source code, used when you ask about plugins or code (gameplay questions don't use them).
+
+**EXILED** (`data/packs/exiled.json`) was generated from the
+[EXILED repository](https://github.com/ExMod-Team/EXILED) and contains:
+
+- all 292 events: what each does, what `ev` contains, whether it can be cancelled, and how to subscribe
+- the public API (`Player`, `Server`, `Map`, `Room`, `Door`, items, roles, ...) and enums (`DamageType`, `EffectType`, ...)
+- the official example plugin's source code
+
+To update it when EXILED releases a new version (needs internet):
+
+```bash
+python tools/learn_exiled.py
+```
+
+Then restart Aria. The EXILED pack is derived from EXILED by the ExMod Team and is shared under the
+same [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) license.
+
 ## Project layout
 
 ```
@@ -88,7 +109,9 @@ app.py                     web server (Flask) and API
 aria/knowledge.py          knowledge base: storage, search, learning
 aria/brain.py              builds answers (offline or with Claude)
 data/seed_knowledge.json   starter knowledge about the game and plugins
+data/packs/                knowledge packs (e.g. the EXILED API)
 data/learned.json          what it learned from you (created automatically)
+tools/learn_exiled.py      rebuilds the EXILED pack from EXILED's source code
 templates/, static/        the web page
 tests/                     automated tests: run with `pytest`
 ```

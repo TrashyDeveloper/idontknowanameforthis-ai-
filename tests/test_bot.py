@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from app import create_app
-from aria.brain import Brain, format_knowledge, wants_code
-from aria.knowledge import KnowledgeBase, tokenize
+from aria.brain import Brain, format_knowledge, gather_context, wants_code
+from aria.knowledge import KnowledgeBase, stem, tokenize
 
 SEED = Path(__file__).parent.parent / "data" / "seed_knowledge.json"
 
@@ -43,7 +43,7 @@ def test_tokenize_understands_scp_names_and_nicknames():
     ("how do I beat 079", "seed-079"),
 ])
 def test_search_finds_the_right_starter_entry(kb, question, expected):
-    assert kb.search(question)[0][0].id == expected
+    assert kb.search(question, packs=False)[0][0].id == expected
 
 
 def test_learned_facts_persist_and_rank_first(tmp_path):
@@ -196,3 +196,30 @@ def test_unknown_answer_lists_no_sources(client):
     meta, text = chat(client, "which is my favorite scp?")
     assert "don't know" in text
     assert meta["sources"] == []
+
+
+def test_tokenize_splits_code_names_and_stems():
+    tokens = tokenize("ChangingLeverStatus")
+    assert {"changingleverstatu", "chang", "lever"} <= set(tokens)
+    assert stem("hurting") == stem("hurt") and stem("escaped") == stem("escape")
+
+
+def test_exiled_pack_is_loaded(kb):
+    pack = kb.stats()["packs"][0]
+    assert pack["name"].startswith("EXILED") and pack["entries"] > 500
+    hurting = kb.get("exiled-event-Player.Hurting")
+    assert hurting.pack.startswith("EXILED") and "IsAllowed = false" in hurting.text
+
+
+@pytest.mark.parametrize("question, expected", [
+    ("exiled event when a player gets hurt", "exiled-event-Player.Hurting"),
+    ("EXILED plugin that does something when the warhead detonates", "exiled-event-Warhead.Detonated"),
+    ("exiled event when a player escapes", "exiled-event-Player.Escaping"),
+])
+def test_plugin_questions_find_exiled_events(kb, question, expected):
+    assert expected in [e.id for e in gather_context(kb, question)]
+
+
+def test_gameplay_questions_ignore_api_packs(kb):
+    assert all(not e.pack for e in gather_context(kb, "what happens when a class-d escapes"))
+    assert wants_code("what DamageType does the micro hid use")

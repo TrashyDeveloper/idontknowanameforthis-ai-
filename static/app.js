@@ -117,7 +117,7 @@ function addFeedback(msg, question, sources) {
     const chip = document.createElement("span");
     chip.className = `source ${s.source}`;
     chip.textContent = (s.kind === "code" ? "{ } " : "") + s.title;
-    chip.title = s.source === "user" ? "Something you taught me" : "Starter knowledge";
+    chip.title = s.source === "user" ? "Something you taught me" : s.pack ? `From the ${s.pack} pack` : "Starter knowledge";
     meta.appendChild(chip);
   }
   const up = Object.assign(document.createElement("button"), { className: "vote", textContent: "👍", title: "Helpful" });
@@ -267,7 +267,9 @@ $("#kb-search").addEventListener("input", () => {
 async function loadKnowledge() {
   const q = $("#kb-search").value.trim();
   const data = await (await fetch(`/api/knowledge?q=${encodeURIComponent(q)}`)).json();
-  $("#kb-stats").textContent = `${data.total} entries · ${data.learned} learned from you · ${data.code_examples} code examples`;
+  const packs = data.packs.map((p) => `${p.name} (${p.entries})`).join(", ");
+  $("#kb-stats").textContent = `${data.total} entries · ${data.learned} learned from you · ${data.code_examples} code examples` +
+    (packs ? ` · packs: ${packs}${q ? "" : ", search to see pack entries"}` : "");
   const list = $("#kb-list");
   list.innerHTML = "";
   if (!data.entries.length) list.innerHTML = `<p class="muted">Nothing found.</p>`;
@@ -281,7 +283,7 @@ async function loadKnowledge() {
           <h3></h3>
           <div class="badges">
             <span class="badge">${kindLabel}</span>
-            <span class="badge ${e.source}">${e.source === "user" ? "learned" : "starter"}</span>
+            <span class="badge ${e.source}">${e.source === "user" ? "learned" : e.pack ? escapeHtml(e.pack) : "starter"}</span>
             ${e.framework ? `<span class="badge">${escapeHtml(e.framework)}</span>` : ""}
             <span class="badge" title="Goes up with 👍 and down with 👎">trust ${e.weight.toFixed(1)}</span>
           </div>

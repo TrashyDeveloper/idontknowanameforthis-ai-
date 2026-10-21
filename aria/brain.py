@@ -24,13 +24,16 @@ RELEVANCE_CUTOFF = 0.35  # drop search results scoring under 35% of the best one
 
 CODE_WORDS = {
     "plugin", "plugins", "code", "c#", "csharp", "script", "event", "events", "handler",
-    "command", "exiled", "labapi", "nwapi", "dll", "compile", "method", "config",
+    "command", "exiled", "labapi", "nwapi", "dll", "compile", "method", "config", "api",
+    "property", "properties", "enum", "args", "eventargs", "ev", "hook", "server-side", "harmony",
 }
 
 SYSTEM_PROMPT = """You are Aria, an assistant specialised in the game SCP: Secret Laboratory \
 (by Northwood Studios) and in writing C# server plugins for it.
 
 Each user message may start with a <knowledge> block holding entries from your knowledge base. \
+Entries with a pack attribute were extracted from that framework's real source code at the \
+stated version, so treat their event names, members and signatures as accurate. \
 Entries marked source="user" were taught or corrected by your user; trust them over your own \
 memory and over source="seed" entries when they disagree. The game is updated often, so if \
 neither the knowledge nor your memory is certain for the current version, say so plainly \
@@ -55,7 +58,8 @@ class Reply:
 
 def wants_code(message: str) -> bool:
     words = set(re.findall(r"[a-z#]+", message.lower()))
-    return bool(words & CODE_WORDS)
+    # A code name like "DamageType" or "Player.Hurting" also means it's a code question.
+    return bool(words & CODE_WORDS) or bool(re.search(r"\b[A-Z][a-z]+[A-Z]\w*|\b[A-Z]\w+\.[A-Z]\w+", message))
 
 
 def relevant(results: list[tuple[Entry, float]]) -> list[Entry]:
@@ -66,8 +70,11 @@ def relevant(results: list[tuple[Entry, float]]) -> list[Entry]:
 
 
 def gather_context(kb: KnowledgeBase, message: str) -> list[Entry]:
-    facts = relevant(kb.search(message, limit=6, kinds=("fact", "qa")))
-    code = relevant(kb.search(message, limit=3, kinds=("code",))) if wants_code(message) else []
+    # Knowledge packs (API references) are only searched for plugin/code questions,
+    # so gameplay questions get gameplay answers.
+    coding = wants_code(message)
+    facts = relevant(kb.search(message, limit=6, kinds=("fact", "qa"), packs=coding))
+    code = relevant(kb.search(message, limit=4, kinds=("code",))) if coding else []
     if wants_code(message) and not code:
         # A plugin request with no keyword match still benefits from seeing how plugins look.
         code = [e for e in kb.all_entries() if e.kind == "code"][:2]
@@ -83,7 +90,8 @@ def format_knowledge(entries: list[Entry]) -> str:
         if e.code:
             body += f"\n```csharp\n{e.code}\n```"
         framework = f' framework="{e.framework}"' if e.framework else ""
-        parts.append(f'<entry id="{e.id}" kind="{e.kind}" source="{e.source}"{framework}>\n'
+        pack = f' pack="{e.pack}"' if e.pack else ""
+        parts.append(f'<entry id="{e.id}" kind="{e.kind}" source="{e.source}"{framework}{pack}>\n'
                      f"{e.title}\n{body}\n</entry>")
     return "<knowledge>\n" + "\n".join(parts) + "\n</knowledge>"
 
@@ -113,15 +121,17 @@ class Brain:
 
     def _offline_answer(self, message: str) -> tuple[str, list[Entry]]:
         """Returns the answer and the entries it was built from."""
-        if wants_code(message):
+        coding = wants_code(message)
+        hits = self.kb.search(message, limit=3, kinds=("fact", "qa"), packs=coding)
+        if coding:
             code = self.kb.search(message, limit=1, kinds=("code",))
-            if code:
+            # Show a code example unless a reference page matches clearly better.
+            if code and not (hits and hits[0][1] > code[0][1] * 1.2):
                 e = code[0][0]
                 return (f"Here's the closest plugin example I've learned: **{e.title}**"
                         f"{f' ({e.framework})' if e.framework else ''}\n\n{e.text}\n\n```csharp\n{e.code}\n```\n\n"
                         "_Offline mode can only show examples I've been taught. Add an Anthropic API key "
                         "so I can write new plugins for you (see the README)._"), [e]
-        hits = self.kb.search(message, limit=3, kinds=("fact", "qa"))
         if not hits or self.kb.coverage(hits[0][0], message) < MIN_OFFLINE_COVERAGE:
             return ("I don't know that one yet. You can teach me: press 👎 and type the right answer, "
                     "or just tell me (for example *remember: ...*)."), []

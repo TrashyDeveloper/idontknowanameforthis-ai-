@@ -1,7 +1,8 @@
 """Knowledge base: stores what the bot knows and finds the entries relevant to a question.
 
-There are two files:
+Where knowledge comes from:
   * data/seed_knowledge.json - the starter knowledge shipped with the project (never modified)
+  * data/packs/*.json        - knowledge packs, e.g. the EXILED API made by tools/learn_exiled.py
   * data/learned.json        - everything the bot learns from you (facts, corrections,
                                code examples, and feedback weights)
 
@@ -47,7 +48,27 @@ MIN_WEIGHT, MAX_WEIGHT = 0.1, 3.0
 USER_ENTRY_WEIGHT = 1.5  # things you taught it outrank the starter knowledge
 
 
+def _split_camel(m: re.Match) -> str:
+    word = m.group(0)
+    return word + " " + " ".join(re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", word))
+
+
+def stem(tok: str) -> str:
+    """A tiny stemmer so "hurting", "hurt" and "spawned", "spawn" match."""
+    if len(tok) > 3 and tok.endswith("s") and not tok.endswith("ss"):
+        tok = tok[:-1]  # "items" -> "item"
+    if len(tok) > 5 and tok.endswith("ing"):
+        tok = tok[:-3]
+    elif len(tok) > 4 and tok.endswith("ed"):
+        tok = tok[:-2]
+    if len(tok) > 4 and tok.endswith("e"):
+        tok = tok[:-1]  # "escape" and "escap(ing)" both become "escap"
+    return tok
+
+
 def tokenize(text: str) -> list[str]:
+    # Code names like "ChangingLeverStatus" are indexed whole and as separate words.
+    text = re.sub(r"\b[A-Za-z]*[a-z][A-Z][A-Za-z0-9]*\b", _split_camel, text)
     text = text.lower()
     # Join "SCP-049-2" / "class-d" / "shy guy" style names into single tokens first.
     text = re.sub(r"scp[\s-]*(\d+)(?:[\s-]+(\d))?", lambda m: " " + m.group(1) + (m.group(2) or ""), text)
@@ -62,10 +83,7 @@ def tokenize(text: str) -> list[str]:
     for tok in re.findall(r"[a-z0-9]+", text):
         if tok in STOPWORDS or (len(tok) == 1 and tok not in ALIASES and not tok.isdigit()):
             continue
-        tok = ALIASES.get(tok, tok)
-        if len(tok) > 3 and tok.endswith("s") and not tok.endswith("ss"):
-            tok = tok[:-1]  # very small stemmer: "items" -> "item"
-        tokens.append(tok)
+        tokens.append(stem(ALIASES.get(tok, tok)))
     return tokens
 
 
@@ -78,7 +96,8 @@ class Entry:
     code: str = ""
     framework: str = ""  # for code: "LabAPI", "EXILED", ...
     tags: list[str] = field(default_factory=list)
-    source: str = "user"  # "seed" or "user"
+    source: str = "user"  # "seed" (starter knowledge and packs) or "user"
+    pack: str = ""  # name of the knowledge pack it came from, e.g. "EXILED 9.15.2"
     weight: float = USER_ENTRY_WEIGHT
     created: float = field(default_factory=time.time)
 
@@ -91,9 +110,10 @@ class Entry:
 
 
 class KnowledgeBase:
-    def __init__(self, seed_path: Path, learned_path: Path):
+    def __init__(self, seed_path: Path, learned_path: Path, packs_dir: Path | None = None):
         self.seed_path = Path(seed_path)
         self.learned_path = Path(learned_path)
+        self.packs_dir = Path(packs_dir) if packs_dir else self.seed_path.parent / "packs"
         self._lock = threading.Lock()
         self._load()
 
@@ -106,6 +126,14 @@ class KnowledgeBase:
         for raw in seed:
             entry = Entry(**{**raw, "source": "seed", "weight": raw.get("weight", 1.0)})
             self.entries[entry.id] = entry
+        self.packs: list[dict] = []
+        for path in sorted(self.packs_dir.glob("*.json")) if self.packs_dir.is_dir() else []:
+            pack = json.loads(path.read_text(encoding="utf-8"))
+            label = f"{pack.get('name', path.stem)} {pack.get('version', '')}".strip()
+            for raw in pack["entries"]:
+                entry = Entry(**{**raw, "source": "seed", "pack": label, "weight": 1.0})
+                self.entries[entry.id] = entry
+            self.packs.append({"name": label, "entries": len(pack["entries"])})
         for raw in learned["entries"]:
             entry = Entry(**{**raw, "source": "user"})
             self.entries[entry.id] = entry
@@ -115,6 +143,7 @@ class KnowledgeBase:
         for entry_id, weight in self.seed_weights.items():
             if entry_id in self.entries:
                 self.entries[entry_id].weight = weight
+        self._docs: dict[str, Counter] = {}
         self._reindex()
 
     def _read_learned(self) -> dict:
@@ -135,7 +164,12 @@ class KnowledgeBase:
         tmp.replace(self.learned_path)
 
     def _reindex(self) -> None:
-        self._docs = {eid: Counter(tokenize(e.search_text())) for eid, e in self.entries.items()}
+        # Entries are tokenized once and cached; only new ones are processed here.
+        for eid in self._docs.keys() - self.entries.keys():
+            del self._docs[eid]
+        for eid, e in self.entries.items():
+            if eid not in self._docs:
+                self._docs[eid] = Counter(tokenize(e.search_text()))
         self._doc_len = {eid: sum(c.values()) for eid, c in self._docs.items()}
         self._avg_len = (sum(self._doc_len.values()) / len(self._doc_len)) if self._doc_len else 1.0
         df: Counter = Counter()
@@ -146,7 +180,8 @@ class KnowledgeBase:
 
     # ---------- searching ----------
 
-    def search(self, query: str, limit: int = 5, kinds: tuple[str, ...] | None = None) -> list[tuple[Entry, float]]:
+    def search(self, query: str, limit: int = 5, kinds: tuple[str, ...] | None = None,
+               packs: bool = True) -> list[tuple[Entry, float]]:
         terms = tokenize(query)
         if not terms:
             return []
@@ -156,7 +191,7 @@ class KnowledgeBase:
             if eid in self.hidden:
                 continue
             entry = self.entries[eid]
-            if kinds and entry.kind not in kinds:
+            if kinds and entry.kind not in kinds or not packs and entry.pack:
                 continue
             score = 0.0
             for term in set(terms):
@@ -188,7 +223,8 @@ class KnowledgeBase:
         return {
             "total": len(visible),
             "learned": sum(1 for e in visible if e.source == "user"),
-            "code_examples": sum(1 for e in visible if e.kind == "code"),
+            "code_examples": sum(1 for e in visible if e.kind == "code" and not e.pack),
+            "packs": self.packs,
         }
 
     # ---------- learning ----------

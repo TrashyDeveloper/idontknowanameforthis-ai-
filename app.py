@@ -56,7 +56,7 @@ def create_app(seed_path: Path | None = None, learned_path: Path | None = None,
 
         reply = brain.reply(message, body.get("history") or [])
         meta = {"type": "meta", "mode": reply.mode,
-                "sources": [{"id": e.id, "title": e.title, "kind": e.kind, "source": e.source}
+                "sources": [{"id": e.id, "title": e.title, "kind": e.kind, "source": e.source, "pack": e.pack}
                             for e in reply.sources]}
         text_events = ({"type": "text", "text": chunk} for chunk in reply.chunks)
         return Response(_events(itertools.chain([meta], text_events)), mimetype="application/x-ndjson")
@@ -80,7 +80,9 @@ def create_app(seed_path: Path | None = None, learned_path: Path | None = None,
         if query:
             entries = [e for e, _ in kb.search(query, limit=50)]
         else:
-            entries = sorted(kb.all_entries(), key=lambda e: (e.source != "user", e.kind, e.title.lower()))
+            # Packs hold hundreds of API entries, so they're only listed when searching.
+            entries = sorted((e for e in kb.all_entries() if not e.pack),
+                             key=lambda e: (e.source != "user", e.kind, e.title.lower()))
         return jsonify(entries=[entry_json(e) for e in entries], **kb.stats())
 
     @app.post("/api/knowledge")
